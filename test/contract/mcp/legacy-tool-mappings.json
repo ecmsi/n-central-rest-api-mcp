@@ -178,10 +178,10 @@
     {
       "legacyName": "get_custom_psa_ticket_detail",
       "disposition": "consolidated",
-      "replacement": "get_psa_ticket",
+      "replacement": "get_psa_ticket_with_credentials",
       "compatibilityTool": "get_custom_psa_ticket_detail",
       "behaviorChanges": [
-        "Maps to get_psa_ticket; reviewed compatibility inputs are accepted and results follow the curated contract."
+        "Maps to get_psa_ticket_with_credentials; reviewed compatibility inputs are accepted and results follow the curated contract."
       ],
       "removalRationale": null
     },

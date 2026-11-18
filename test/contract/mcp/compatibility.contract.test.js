@@ -33,7 +33,7 @@ it('freezes the final migration counts and omits removed Custom PSA list discove
   assert.equal(psaTools.some(({ name }) => name === 'search_psa_tickets'), false);
   assert.equal(toolDefinitions.some(({ name }) => name === 'search_psa_tickets'), false);
   assert.equal(toolDefinitions.some(({ name }) => name === 'list_custom_psa_tickets'), false);
-  assert.equal(toolDefinitions.length, 104);
+  assert.equal(toolDefinitions.length, 105);
 });
 
 it('maps legacy device-note paging into the notes component only', async () => {

@@ -40,7 +40,7 @@ The reviewed 87-name inventory contains 53 retained, 31 consolidated/deprecated,
 | `get_access_group` | retained | `get_access_group` | `get_access_group` | No contract change. |
 | `get_appliance_task` | retained | `get_appliance_task` | `get_appliance_task` | No contract change. |
 | `get_current_user` | retained | `get_current_user` | `get_current_user` | No contract change. |
-| `get_custom_psa_ticket_detail` | consolidated | `get_psa_ticket` | `get_custom_psa_ticket_detail` | Maps to get_psa_ticket; reviewed compatibility inputs are accepted and results follow the curated contract. |
+| `get_custom_psa_ticket_detail` | consolidated | `get_psa_ticket_with_credentials` | `get_custom_psa_ticket_detail` | Maps to get_psa_ticket_with_credentials; reviewed compatibility inputs are accepted and results follow the curated contract. |
 | `get_customer` | consolidated | `get_organization_context` | `get_customer` | Maps to get_organization_context; reviewed compatibility inputs are accepted and results follow the curated contract. |
 | `get_device` | consolidated | `get_device_context` | `get_device` | Maps to get_device_context; reviewed compatibility inputs are accepted and results follow the curated contract. |
 | `get_device_activation_key` | retained | `get_device_activation_key` | `get_device_activation_key` | No contract change. |
