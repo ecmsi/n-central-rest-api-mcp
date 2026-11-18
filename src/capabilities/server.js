@@ -24,7 +24,14 @@ export async function getServerStatus(args = {}) {
 
 export async function validateSession() {
   const response = await readSessionValidation();
-  return createCapabilityResult({ valid: true, response }, ['GET /api/auth/validate']);
+  // Project the upstream body to a fixed shape instead of passing it through
+  // verbatim, so nothing N-central might add to this response reaches the model.
+  const message = typeof response === 'string'
+    ? response
+    : (response && typeof response === 'object' && 'message' in response && typeof response.message === 'string')
+      ? response.message
+      : null;
+  return createCapabilityResult({ valid: true, message }, ['GET /api/auth/validate']);
 }
 
 /** @param {{detailLevel?: 'compact'|'full'}} [args] */

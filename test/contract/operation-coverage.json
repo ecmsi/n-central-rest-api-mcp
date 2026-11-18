@@ -1899,7 +1899,7 @@
       "verificationStatus": "verified",
       "exposure": "direct-tool",
       "capabilities": [
-        "get_psa_ticket",
+        "get_psa_ticket_with_credentials",
         "get_custom_psa_ticket_detail"
       ],
       "gaps": [],

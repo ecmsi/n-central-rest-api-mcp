@@ -213,7 +213,8 @@ describe('end-to-end session isolation through the real MCP transport', () => {
 // Boot matrix
 // ---------------------------------------------------------------------------
 const indexPath = fileURLToPath(new URL('../index.js', import.meta.url));
-const mockLoaderPath = fileURLToPath(new URL('./contract/mock-fetch-loader.js', import.meta.url));
+// A file URL, not a filesystem path: --import rejects Windows drive-letter paths (ERR_UNSUPPORTED_ESM_URL_SCHEME).
+const mockLoaderPath = new URL('./contract/mock-fetch-loader.js', import.meta.url).href;
 
 function freePort() {
   return new Promise((resolve) => {
@@ -454,7 +455,11 @@ describe('real curated registry parity', () => {
         exited,
         new Promise((_, reject) => setTimeout(() => reject(new Error('HTTP server did not shut down')), 2000)),
       ]);
-      assert.deepEqual(outcome, { code: 0, signal: null });
+      // Node on Windows cannot deliver SIGTERM: kill() terminates the child
+      // outright, so a clean exit code can only be observed on POSIX platforms.
+      assert.deepEqual(outcome, process.platform === 'win32'
+        ? { code: null, signal: 'SIGTERM' }
+        : { code: 0, signal: null });
     } finally {
       if (child.exitCode == null && child.signalCode == null) child.kill('SIGKILL');
     }

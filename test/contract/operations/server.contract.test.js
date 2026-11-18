@@ -21,6 +21,9 @@ describe('server and authentication operation adapters', () => {
       await validateSession();
       await listJobStatuses('42');
     });
+    // Every upstream request, including the JWT exchange, must refuse redirects
+    // so credentials can never be replayed to another origin.
+    assert.ok(boundary.calls.every((call) => call.redirect === 'error'), 'all fetches set redirect: error');
     assert.deepEqual(boundary.calls.map(({ method, path }) => `${method} ${path}`), [
       'POST /api/auth/authenticate',
       'GET /api/health',

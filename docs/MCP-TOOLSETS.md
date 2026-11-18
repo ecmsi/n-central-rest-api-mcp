@@ -47,7 +47,7 @@ Omitting both variables selects `core` and `read-only`. `NC_TOOLSETS=all` expand
 | `perform_windows_service_action` | destructive | Start, stop, pause, resume, or restart named Windows services on a managed endpoint. |
 | `get_remote_control_type` | read | Retrieve the configured remote-control technology for one device. |
 | `create_remote_control_task` | destructive | Create a remote-control session task for one managed endpoint. |
-| `get_device_activation_key` | read | Generate an activation key for one managed device. |
+| `get_device_activation_key` | write | Generate an activation key for one managed device. |
 | `get_software_installers` | read | List software installers available to one customer. |
 | `generate_software_download_link` | write | Generate a customer-scoped software installer download link. |
 | `generate_patch_comparison_report` | write | Submit a patch-comparison report generation request. |
@@ -78,15 +78,16 @@ Omitting both variables selects `core` and `read-only`. `NC_TOOLSETS=all` expand
 | `create_user_role` | write | PREVIEW: Create a user role beneath one organization unit; this contract may change. |
 | `create_access_group` | write | Create an organization-unit access group. |
 | `create_device_access_group` | write | Create a device-scoped access group beneath one organization unit. |
-| `get_registration_token` | read | Retrieve a sensitive registration token. The site and customer variants are PREVIEW and may change; the organization-unit variant is stable. |
+| `get_registration_token` | write | Retrieve a sensitive registration token. The site and customer variants are PREVIEW and may change; the organization-unit variant is stable. |
 
-## `psa` (11)
+## `psa` (12)
 
 | Tool | Scope | Description |
 |---|---|---|
 | `get_psa_customer_mapping` | read | Retrieve the canonical Standard PSA mapping for one customer. |
 | `validate_psa_credential` | write | Validate sensitive Standard PSA credentials for a named PSA type. |
-| `get_psa_ticket` | read | Retrieve one Custom PSA ticket, optionally using supplied PSA credentials. |
+| `get_psa_ticket` | read | Retrieve one Custom PSA ticket using the server-side PSA integration. |
+| `get_psa_ticket_with_credentials` | write | Retrieve one Custom PSA ticket by posting supplied sensitive PSA credentials. |
 | `create_psa_ticket` | write | Create a Custom PSA ticket from its required external ticket fields. |
 | `resolve_psa_ticket` | write | Resolve one explicitly identified Custom PSA ticket. |
 | `reopen_psa_ticket` | write | Reopen one explicitly identified Custom PSA ticket. |
@@ -132,10 +133,10 @@ Omitting both variables selects `core` and `read-only`. `NC_TOOLSETS=all` expand
 | `get_access_group` | read | Retrieve one access group by its identifier. |
 | `get_appliance_task` | read | Retrieve appliance-task status and details by task identifier. |
 | `get_current_user` | read | Return compact current-user identity and authorization context, or explicit full profile detail. |
-| `get_custom_psa_ticket_detail` | write | DEPRECATED: use get_psa_ticket. Retrieve one Custom PSA ticket, optionally using supplied PSA credentials. |
+| `get_custom_psa_ticket_detail` | write | DEPRECATED: use get_psa_ticket_with_credentials. Retrieve one Custom PSA ticket by posting supplied sensitive PSA credentials. |
 | `get_customer` | read | DEPRECATED: use get_organization_context. Load compact organization details plus selected bounded children, limits, and custom-property context. Request full/all explicitly. |
 | `get_device` | read | DEPRECATED: use get_device_context. Load a device plus selected monitoring, asset, lifecycle, note, custom-property, and task context. |
-| `get_device_activation_key` | read | Generate an activation key for one managed device. |
+| `get_device_activation_key` | write | Generate an activation key for one managed device. |
 | `get_device_assets` | read | DEPRECATED: use get_device_context. Load a device plus selected monitoring, asset, lifecycle, note, custom-property, and task context. |
 | `get_device_custom_property` | read | Retrieve one custom property assigned to one device. |
 | `get_device_default_custom_property` | read | Retrieve one inherited device custom-property default. |
@@ -147,7 +148,7 @@ Omitting both variables selects `core` and `read-only`. `NC_TOOLSETS=all` expand
 | `get_org_unit_limits` | read | Retrieve licensing and usage limits for one organization unit. |
 | `get_org_unit_property` | read | Retrieve one organization-unit custom property. |
 | `get_psa_customer_mapping` | read | Retrieve the canonical Standard PSA mapping for one customer. |
-| `get_registration_token` | read | Retrieve a sensitive registration token. The site and customer variants are PREVIEW and may change; the organization-unit variant is stable. |
+| `get_registration_token` | write | Retrieve a sensitive registration token. The site and customer variants are PREVIEW and may change; the organization-unit variant is stable. |
 | `get_report` | read | DEPRECATED: use run_report. Run one reviewed read-only report adapter; arbitrary REST methods or paths are not accepted. |
 | `get_scheduled_task` | read | DEPRECATED: use get_scheduled_task_context. Load a scheduled-task definition and optionally its aggregate or per-device execution status. |
 | `get_scheduled_task_status` | read | DEPRECATED: use get_scheduled_task_context. Load a scheduled-task definition and optionally its aggregate or per-device execution status. |

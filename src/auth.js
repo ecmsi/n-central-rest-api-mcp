@@ -12,7 +12,6 @@
 
 /** @typedef {import('./context.js').TenantContext} TenantContext */
 
-import { MULTI_TENANT } from './context.js';
 import { configuredNumber } from './config.js';
 
 const AUTH_TIMEOUT_MS = 15_000;
@@ -132,14 +131,18 @@ function exchangeJwt(entry) {
       const res = await fetch(`${entry.fqdn}/api/auth/authenticate`, {
         method: 'POST',
         headers,
+        // Never follow redirects: the bearer JWT must only ever reach the
+        // validated N-central origin.
+        redirect: 'error',
         signal: ac.signal,
       });
 
       if (!res.ok) {
-        // In multi-tenant mode, don't echo the auth response body — it can carry
-        // tenant-identifying detail into shared operator logs.
-        const body = MULTI_TENANT ? '' : await res.text();
-        throw new Error(`Auth failed (${res.status})${body ? `: ${body.substring(0, 200)}` : ''}`);
+        // Never echo the auth response body: it can carry tenant- or
+        // user-identifying detail into client log files. The status code is
+        // enough to distinguish a bad token (401) from a server fault (5xx).
+        try { await res.body?.cancel(); } catch { /* best-effort connection cleanup */ }
+        throw new Error(`Auth failed (${res.status})`);
       }
 
       const data = await res.json();
@@ -181,6 +184,9 @@ function refreshAccessToken(entry) {
         method: 'POST',
         headers,
         body: entry.refreshToken,
+        // The refresh token travels in the body, which fetch preserves across
+        // 307/308 redirects. Refuse redirects so it cannot leave this origin.
+        redirect: 'error',
         signal: ac.signal,
       });
 

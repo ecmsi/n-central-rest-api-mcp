@@ -197,7 +197,7 @@ export const compatibilityTools = Object.freeze(mappingDocument.records
       inputSchema: legacySchemas[record.legacyName] || legacyDefinition.inputSchema,
       operations: Object.freeze(legacyOperations[record.legacyName] || legacyDefinition.operations),
       toolsets: Object.freeze(['compatibility']),
-      writeScope: record.legacyName === 'get_custom_psa_ticket_detail' ? 'write' : (legacyDefinition.writeScope || target.writeScope),
+      writeScope: legacyDefinition.writeScope || target.writeScope,
       handler: specialHandlers[record.legacyName]
         || ((args) => target.handler(transforms[record.legacyName]?.(args) ?? args)),
     });

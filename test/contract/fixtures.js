@@ -80,6 +80,7 @@ export function installContractFetch({ responder } = {}) {
         path: url.pathname,
         query: Object.fromEntries(url.searchParams.entries()),
         body,
+        redirect: init.redirect ?? 'follow',
         headers: Object.fromEntries(
           [...headers.entries()].map(([name, value]) => [
             name.toLowerCase(),
@@ -121,4 +122,4 @@ export async function withSyntheticTenant(tenant, fn) {
   }
 }
 
-/** @typedef {{ method: string, url: string, origin: string, path: string, query: Record<string, string>, body: unknown, headers: Record<string, string> }} CapturedRequest */
+/** @typedef {{ method: string, url: string, origin: string, path: string, query: Record<string, string>, body: unknown, redirect: string, headers: Record<string, string> }} CapturedRequest */
