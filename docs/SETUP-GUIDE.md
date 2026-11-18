@@ -4,6 +4,7 @@ How to connect the N-central REST API MCP server to common MCP clients — **Cla
 **Claude Desktop**, **Cursor**, and anything else that speaks MCP — in both deployment modes.
 
 For installing/running the server itself and the full tool list, see the [README](../README.md).
+This is the ECMSI fork of the upstream project; [Fork Changes](FORK-CHANGES.md) lists what differs.
 
 ---
 
@@ -36,7 +37,9 @@ NC_WRITE_MODE=read-only
 Valid toolsets are `core`, `operations`, `administration`, `psa`, `reporting`, and the deprecated
 `compatibility` migration catalog. Valid modes are `read-only`, `write`, and `full`; destructive
 tools are visible only in `full`. Catalog unions are de-duplicated and then intersected with the
-mode, so selecting a catalog never bypasses authority.
+mode, so selecting a catalog never bypasses authority. In this fork, the tools that return agent
+enrollment material and the credentialed PSA ticket lookup are write-scoped, so `read-only` never
+advertises them even when their catalogs are selected (see [Fork Changes](FORK-CHANGES.md)).
 
 Use `NC_TOOLSETS=all` to select all five preferred v3 catalogs. It intentionally excludes the
 legacy `compatibility` aliases to avoid duplicate discovery and unnecessary token cost. Use
@@ -335,6 +338,41 @@ You don't need multi-tenant mode just to use several N-centrals from your own ed
 }
 ```
 Each entry is its own process with its own credentials — fully isolated, no server changes needed.
+
+---
+
+## Windows notes
+
+- **Install the Node.js LTS line** (currently 26). The server requires Node 22.9 or newer; LTS lines
+  receive security fixes for about 30 months, while Current lines go unmaintained after six.
+- **Use the absolute `node.exe` path** in every MCP client entry, for example
+  `C:\Program Files\nodejs\node.exe`. Claude Desktop and other GUI clients do not inherit the
+  `PATH` your terminal sees, so a bare `node` command fails silently with "connection closed".
+- **Keep the JWT in `.env`**, loaded with `--env-file-if-exists=<checkout>\.env`, rather than in the
+  client config file. The `.env` file is gitignored; the client config is not protected.
+- **Before running the test suite**, run `git config core.autocrlf false` in this checkout and
+  re-checkout the files (`git rm -rq --cached . && git reset --hard`). The contract tests hash the
+  OpenAPI and coverage files, and CRLF conversion changes those bytes.
+- **The per-file coverage floor cannot be measured on Windows.** HTTP-mode child processes are
+  killed by signal and never write their coverage. Every other gate passes locally; rely on the
+  fork's Linux CI for that one.
+
+A working Claude Desktop entry on Windows, single-tenant stdio:
+
+```json
+{
+  "mcpServers": {
+    "ncentral": {
+      "command": "C:\\Program Files\\nodejs\\node.exe",
+      "args": [
+        "--env-file-if-exists=C:\\path\\to\\checkout\\.env",
+        "C:\\path\\to\\checkout\\index.js"
+      ],
+      "env": { "NC_WRITE_MODE": "read-only" }
+    }
+  }
+}
+```
 
 ---
 

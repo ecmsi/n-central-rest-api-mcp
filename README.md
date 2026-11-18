@@ -1,6 +1,8 @@
-# N-central REST API MCP Server
+# N-central REST API MCP Server (ECMSI fork)
 
 > A [Model Context Protocol](https://modelcontextprotocol.io/) server for **N-able N-central** — exposing the N-central REST API as MCP tools, resources, and prompts for use with any MCP-compatible client.
+
+> **About this fork:** This is ECMSI's reviewed and hardened fork of [theonlytruebigmac/n-central-mcp](https://github.com/theonlytruebigmac/n-central-mcp), the community server that N-able's developer portal distributes as a recipe. It tracks upstream and adds the security hardening listed in **[Fork Changes](docs/FORK-CHANGES.md)**. The original work is copyright its upstream author; ECMSI holds copyright on the fork's modifications. Both are released under the MIT License.
 
 > **Disclaimer:** This is an unofficial, community-maintained MCP server. It is **not** an official N-able MCP server, and it is focused specifically on the N-central **REST API** surface.
 
@@ -17,6 +19,7 @@
 - **Two transports**: stdio (for Claude Desktop / local clients) and Streamable HTTP (for remote clients, MCP Inspector, etc.)
 - **Single- or multi-tenant**: self-host against one N-central (env credentials), or run one hosted server many users point at — each targeting their *own* N-central via per-request headers (`NC_MULTI_TENANT=1`), with strict per-request credential isolation. See the **[Setup & Client Guide](docs/SETUP-GUIDE.md)**
 - **Production-grade auth**: JWT exchange with auto-refresh, hash-based bearer-token auth for the HTTP endpoint, CORS allow-list, rate limiting, audit log
+- **Hardened in this fork**: redirects refused on every upstream fetch, credential-returning tools write-scoped, CSV formula neutralisation, fixed-shape session validation, no upstream error bodies in logs, audited lockfile — see [Fork Changes](docs/FORK-CHANGES.md)
 - **Operability**: `/healthz` and `/metrics` (Prometheus text format) endpoints, structured audit logging, configurable retry/timeout/session caps
 
 ---
@@ -28,6 +31,7 @@
 - **Node.js ≥ 22.9** (uses the built-in `--env-file-if-exists` flag and `fetch`)
 - An **N-central instance** you can reach over HTTPS
 - A **User-API JWT token** generated in the N-central UI
+- **On Windows:** install the Node.js LTS line, reference the absolute `node.exe` path in MCP client configs (GUI clients do not inherit your shell `PATH`), and run `git config core.autocrlf false` in this checkout before running the test suite. See the [Windows notes](docs/SETUP-GUIDE.md#windows-notes) in the setup guide.
 
 ### 1. Install dependencies
 
@@ -78,7 +82,10 @@ relevance; write mode controls authority after the selected toolsets are combine
 
 For example, `NC_TOOLSETS=core,reporting` remains read-only by default, while
 `NC_TOOLSETS=operations NC_WRITE_MODE=full` enables destructive operational workflows. All
-write/destructive tools are audit-logged. See [MCP Toolsets](docs/MCP-TOOLSETS.md) for exact current
+write/destructive tools are audit-logged. In this fork, tools that return agent enrollment material
+(`get_device_activation_key`, `get_registration_token`) and the credentialed PSA lookup
+(`get_psa_ticket_with_credentials`) are write-scoped, so `read-only` never advertises them. See
+[MCP Toolsets](docs/MCP-TOOLSETS.md) for exact current
 membership and [Migrating to 3.0](docs/MIGRATING-TO-3.0.md) for all 87 legacy-name dispositions.
 `NC_TOOLSETS=all` expands to the five preferred v3 catalogs and intentionally excludes the legacy
 `compatibility` aliases; use `NC_TOOLSETS=all,compatibility` only while testing or migrating old names.
@@ -155,10 +162,12 @@ docker compose up -d
 
 Compose maps `127.0.0.1:3100:3100` by default. To expose on the LAN, edit `docker-compose.yml` and ensure `MCP_API_KEY` is set.
 
-Versioned images are also published to GitHub Container Registry:
+Versioned images are published to GitHub Container Registry when a release tag is pushed to this
+fork. Upstream publishes its own images under `ghcr.io/theonlytruebigmac/`; those do not contain the
+fork's hardening.
 
 ```bash
-docker pull ghcr.io/theonlytruebigmac/n-central-rest-api-mcp:<released-version>
+docker pull ghcr.io/ecmsi/n-central-rest-api-mcp:<released-version>
 ```
 
 Version 3.0.0 is currently an unreleased candidate; see [Release Readiness](docs/RELEASE-READINESS.md)
@@ -264,9 +273,10 @@ read-only tools:
 11. `run_report`
 12. `list_job_statuses`
 
-Optional catalogs contain 21 operations tools, 23 administration tools, 11 PSA tools, and 6
+Optional catalogs contain 21 operations tools, 23 administration tools, 12 PSA tools, and 6
 reporting tools. The deprecated compatibility catalog exposes 84 safely retained or adapted 2.x
-names. Counts are catalog memberships and are not additive when selected catalogs overlap. See the
+names. Counts are catalog memberships and are not additive when selected catalogs overlap; the
+de-duplicated union of every catalog is 105 tools. See the
 generated [MCP Toolsets](docs/MCP-TOOLSETS.md) reference for exact names, descriptions, scopes, and
 configuration examples.
 
@@ -393,7 +403,7 @@ Resources provide live context to the client without requiring explicit tool cal
   `integrationStatus: "unavailable"`; it does not claim the integration is definitively absent.
 - **Per-endpoint concurrency limits:** N-central enforces concurrency per-endpoint (range 1-50). `/api/devices` allows 5 concurrent; `/api/devices/{id}/assets/lifecycle-info` only 1. Bulk reports default to safe values; tune via the `concurrency` parameter.
 - **PREVIEW endpoints:** customer-scoped site listing/creation, customer/site registration tokens, and user-role listing/detail/creation are flagged PREVIEW by N-central. Every mapped tool warns during discovery because these contracts may change.
-- **Credentialed POST tools:** `validate_psa_credential` and the compatibility alias `get_custom_psa_ticket_detail` transmit plaintext credentials in request bodies — use them only over HTTPS. The credential-bearing authenticated server-information operation is intentionally not exposed.
+- **Credentialed POST tools:** `validate_psa_credential`, `get_psa_ticket_with_credentials`, and the compatibility alias `get_custom_psa_ticket_detail` transmit plaintext credentials in request bodies — use them only over HTTPS. All three are write-scoped and never advertised in `read-only` mode. The credential-bearing authenticated server-information operation is intentionally not exposed.
 - **`select` is a filter, not a projection:** despite the name, the `select` query parameter on list endpoints is a **FIQL/RSQL predicate** that filters rows. It does NOT pick which fields come back. Valid: `select=soId==50` (returns only that SO). Invalid: `select=soId,soName` (parse error). Not all fields are queryable — unsupported ones error with `Field not found: X`. Some operators (e.g. `=gt=`) throw NPEs on the server.
 - **Device-create required fields:** The reviewed OpenAPI snapshot contains one malformed generated entry in `DeviceAddRequest.required`. `create_device` deliberately enforces the five valid required fields (`customerId`, `networkAddress`, `longName`, `supportedOs`, and `deviceClass`) and ignores only that invalid schema artifact.
 
@@ -425,7 +435,9 @@ For client-side setup issues, see the **[Setup & Client Guide](docs/SETUP-GUIDE.
 Pushing a stable semantic-version tag starts `.github/workflows/release.yml`. The workflow requires
 the tag to exactly match the package, lockfile, and MCP server version, runs the release gates, builds
 Linux AMD64 and ARM64 images, publishes them to GHCR, and then creates the corresponding GitHub
-Release.
+Release. In this fork the images land under `ghcr.io/ecmsi/n-central-rest-api-mcp`, and the version
+is shared with upstream: this fork does not bump it independently, so a tag here describes upstream's
+version plus the changes in [Fork Changes](docs/FORK-CHANGES.md).
 
 Version `3.0.0` metadata currently describes an unreleased candidate. Do not create its tag until
 the generated [Release Readiness](docs/RELEASE-READINESS.md) report is current, `npm run release:check`
@@ -500,6 +512,7 @@ The Copilot integration requires Spec Kit's explicit multi-install override when
 │   ├── live-readonly-smoke.js     # Explicit credential-backed read-only verification
 │   └── …                          # Generated-doc, evaluation, readiness, and version checks
 ├── test/
+│   ├── auth-failure.test.js    # Failed token exchange surfaces only the status code, never the body
 │   ├── auth-isolation.test.js  # Per-tenant token/credential isolation (forced interleave, 401 path)
 │   ├── config.test.js          # Fail-fast numeric configuration contracts
 │   ├── critical-coverage.test.js # Per-file coverage parser and enforcement
@@ -514,6 +527,7 @@ The Copilot integration requires Spec Kit's explicit multi-install override when
 │   ├── API-COVERAGE.md          # Generated 104-operation implementation/evidence ledger
 │   ├── ARCHITECTURE.md           # Runtime boundaries and supported deployment topology
 │   ├── DEPENDENCY-REVIEW.md      # Combined dependency and superseded-PR disposition record
+│   ├── FORK-CHANGES.md          # What this ECMSI fork changes from upstream, and why
 │   ├── MCP-EVALUATION.md         # Generated tool-selection quality report
 │   ├── MCP-TOOLSETS.md          # Generated exact catalog membership and scopes
 │   ├── MIGRATING-TO-3.0.md      # All 87 legacy-name dispositions
@@ -530,4 +544,6 @@ The Copilot integration requires Spec Kit's explicit multi-install override when
 
 ## License
 
-Released under the [MIT License](LICENSE) — see the `LICENSE` file for the full text.
+Released under the [MIT License](LICENSE). Copyright (c) 2026 theonlytruebigmac for the original
+work and copyright (c) 2026 ECMSI for the modifications in this fork — see the `LICENSE` file for the
+full text and [Fork Changes](docs/FORK-CHANGES.md) for what those modifications are.
