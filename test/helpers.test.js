@@ -161,6 +161,14 @@ describe('toCsv edge cases', () => {
     assert.match(csv, /2026-05-22T12:34:56\.000Z/);
   });
 
+  it('neutralises spreadsheet formula injection in string cells', () => {
+    const csv = toCsv([
+      { name: '=HYPERLINK("https://evil.example","x")', note: '+1', tag: '-x', at: '@cmd', balance: -5 },
+    ]);
+    const row = csv.split('\n')[1];
+    assert.match(row, /^"'=HYPERLINK\(""https:\/\/evil\.example"",""x""\)",'\+1,'-x,'@cmd,-5$/);
+  });
+
   it('stringifies objects inside arrays instead of [object Object]', () => {
     const csv = toCsv([{ items: [{ id: 1 }, { id: 2 }] }]);
     assert.doesNotMatch(csv, /\[object Object\]/);

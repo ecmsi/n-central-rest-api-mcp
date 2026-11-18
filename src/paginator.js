@@ -115,9 +115,16 @@ function flatten(obj, prefix = '') {
   return out;
 }
 
+// Spreadsheet applications treat a cell starting with one of these as a
+// formula. Untrusted N-central text (device names, notes, custom properties)
+// must not become executable when a CSV export is opened in Excel.
+const FORMULA_LEAD = /^[=+\-@\t\r]/;
+
 function csvEscape(value) {
   if (value instanceof Date) value = value.toISOString();
-  const s = String(value);
+  let s = String(value);
+  // Only strings carry injection risk; numbers such as -5 are emitted as-is.
+  if (typeof value === 'string' && FORMULA_LEAD.test(s)) s = `'${s}`;
   return s.includes(',') || s.includes('"') || s.includes('\n')
     ? `"${s.replace(/"/g, '""')}"`
     : s;
