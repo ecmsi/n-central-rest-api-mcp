@@ -12,7 +12,6 @@
 
 /** @typedef {import('./context.js').TenantContext} TenantContext */
 
-import { MULTI_TENANT } from './context.js';
 import { configuredNumber } from './config.js';
 
 const AUTH_TIMEOUT_MS = 15_000;
@@ -139,10 +138,11 @@ function exchangeJwt(entry) {
       });
 
       if (!res.ok) {
-        // In multi-tenant mode, don't echo the auth response body — it can carry
-        // tenant-identifying detail into shared operator logs.
-        const body = MULTI_TENANT ? '' : await res.text();
-        throw new Error(`Auth failed (${res.status})${body ? `: ${body.substring(0, 200)}` : ''}`);
+        // Never echo the auth response body: it can carry tenant- or
+        // user-identifying detail into client log files. The status code is
+        // enough to distinguish a bad token (401) from a server fault (5xx).
+        await res.body?.cancel().catch(() => {});
+        throw new Error(`Auth failed (${res.status})`);
       }
 
       const data = await res.json();
