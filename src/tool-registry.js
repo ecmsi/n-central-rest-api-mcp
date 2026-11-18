@@ -12,7 +12,11 @@ export const COMPOSITION_LIMITS = Object.freeze({
   resultBytes: 256 * 1024,
 });
 
+// Credential-bearing reads. These are also write-scoped so read-only mode
+// never advertises them, but the explicit list keeps audit classification
+// independent of scope.
 const EXPLICIT_SENSITIVE_TOOLS = new Set([
+  'get_device_activation_key',
   'get_registration_token',
   'list_users',
   'list_user_roles',
