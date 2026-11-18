@@ -132,6 +132,9 @@ function exchangeJwt(entry) {
       const res = await fetch(`${entry.fqdn}/api/auth/authenticate`, {
         method: 'POST',
         headers,
+        // Never follow redirects: the bearer JWT must only ever reach the
+        // validated N-central origin.
+        redirect: 'error',
         signal: ac.signal,
       });
 
@@ -181,6 +184,9 @@ function refreshAccessToken(entry) {
         method: 'POST',
         headers,
         body: entry.refreshToken,
+        // The refresh token travels in the body, which fetch preserves across
+        // 307/308 redirects. Refuse redirects so it cannot leave this origin.
+        redirect: 'error',
         signal: ac.signal,
       });
 

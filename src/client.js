@@ -106,6 +106,9 @@ async function apiRequest(method, path, { params = {}, body = null, retryTransie
         method,
         headers,
         body: hasBody ? JSON.stringify(body) : undefined,
+        // An API client has no reason to follow redirects; refusing them keeps
+        // the access token pinned to the validated N-central origin.
+        redirect: 'error',
         signal: ac.signal,
       });
     } catch (err) {
