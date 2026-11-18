@@ -544,6 +544,4 @@ The Copilot integration requires Spec Kit's explicit multi-install override when
 
 ## License
 
-Released under the [MIT License](LICENSE). Copyright (c) 2026 theonlytruebigmac for the original
-work and copyright (c) 2026 ECMSI for the modifications in this fork — see the `LICENSE` file for the
-full text and [Fork Changes](docs/FORK-CHANGES.md) for what those modifications are.
+Released under the [MIT License](LICENSE).
