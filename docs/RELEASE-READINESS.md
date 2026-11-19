@@ -2,7 +2,7 @@
 
 > Generated from `test/contract/v3-release-readiness.json` and reconciled repository evidence. Do not edit manually.
 
-**Candidate:** 3.0.0-ecmsi.2 (expected tag `v3.0.0-ecmsi.2`)
+**Candidate:** 3.0.0-ecmsi.3 (expected tag `v3.0.0-ecmsi.3`)
 
 **Scope decision:** RECONCILED — PRE-PUBLICATION GATES REQUIRED
 
@@ -115,4 +115,4 @@ Additive API coverage may ship in compatible 3.x releases. SSO, remote logout, a
 - An immutable image digest must be recorded in the GitHub release.
 - Release notes are generated from the exact approved tag.
 - A retry must preserve an existing release and must never move the version tag.
-- Creating `v3.0.0-ecmsi.2` is a separate, explicit post-merge maintainer approval action.
+- Creating `v3.0.0-ecmsi.3` is a separate, explicit post-merge maintainer approval action.

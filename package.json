@@ -1,6 +1,6 @@
 {
   "name": "n-central-rest-api-mcp",
-  "version": "3.0.0-ecmsi.2",
+  "version": "3.0.0-ecmsi.3",
   "description": "ECMSI hardened fork of the unofficial MCP server for the N-central REST API — exposes endpoints as MCP tools with org hierarchy resources and workflow prompts.",
   "repository": {
     "type": "git",
@@ -14,7 +14,8 @@
     "index.js",
     "src/",
     "test/contract/mcp/legacy-tool-mappings.json",
-    ".env.example"
+    ".env.example",
+    "npm-shrinkwrap.json"
   ],
   "bin": {
     "n-central-rest-api-mcp": "./index.js"
