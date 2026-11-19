@@ -26,8 +26,8 @@ jobs:
         env:
           TAG_NAME: ${{ github.ref_name }}
         run: |
-          if [[ ! "$TAG_NAME" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo "Release tags must use vMAJOR.MINOR.PATCH (received $TAG_NAME)" >&2
+          if [[ ! "$TAG_NAME" =~ ^v[0-9]+\.[0-9]+\.[0-9]+-ecmsi\.[0-9]+$ ]]; then
+            echo "Fork release tags must use vMAJOR.MINOR.PATCH-ecmsi.N (received $TAG_NAME)" >&2
             exit 1
           fi
           TAG_VERSION="${TAG_NAME#v}"
@@ -35,9 +35,22 @@ jobs:
       - name: Run release gates
         run: npm run release:check
 
+  verify-windows:
+    name: Verify on Windows
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24.x'
+          cache: npm
+      - run: npm ci
+      - name: Run portable release gates
+        run: npm run release:check:windows
+
   publish-image:
     name: Publish container image
-    needs: verify
+    needs: [verify, verify-windows]
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -59,14 +72,18 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: ghcr.io/${{ github.repository }}
+          # Fork versions carry a prerelease suffix, so only the exact version and `latest`
+          # are applied; the floating major and major.minor aliases are skipped by design.
           tags: |
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
             type=semver,pattern={{major}}
             type=raw,value=latest
           labels: |
-            org.opencontainers.image.title=N-central REST API MCP
-            org.opencontainers.image.description=Unofficial MCP server for the N-central REST API
+            org.opencontainers.image.title=N-central REST API MCP (ECMSI fork)
+            org.opencontainers.image.description=ECMSI hardened fork of the unofficial MCP server for the N-central REST API
+            org.opencontainers.image.vendor=ECMSI
+            org.opencontainers.image.licenses=MIT
       - name: Build and push image
         id: build
         uses: docker/build-push-action@v6
@@ -88,6 +105,23 @@ jobs:
     permissions:
       contents: write
     steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24.x'
+      - name: Build the package tarball
+        env:
+          TAG_NAME: ${{ github.ref_name }}
+        run: |
+          TAG_VERSION="${TAG_NAME#v}"
+          # Ship the exact dependency tree the release gates ran against; npm reads
+          # npm-shrinkwrap.json from the tarball on install.
+          npm shrinkwrap
+          npm pack --pack-destination dist
+          TARBALL="dist/n-central-rest-api-mcp-${TAG_VERSION}.tgz"
+          test -f "$TARBALL"
+          (cd dist && sha256sum "$(basename "$TARBALL")" > "$(basename "$TARBALL").sha256")
+          echo "TARBALL=$TARBALL" >> "$GITHUB_ENV"
       - name: Create versioned release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -100,7 +134,8 @@ jobs:
             exit 1
           fi
           RELEASE_NOTES="Container image: ghcr.io/${GITHUB_REPOSITORY}:${TAG_VERSION}
-          Immutable digest: ${IMAGE_DIGEST}"
+          Immutable digest: ${IMAGE_DIGEST}
+          Package tarball: $(basename "$TARBALL") (checksum in the matching .sha256 asset). Install on any platform with Node 22.9+ using \`npm install -g <tarball>\`."
           if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
             echo "GitHub Release $GITHUB_REF_NAME already exists; leaving it unchanged."
           else
@@ -108,5 +143,6 @@ jobs:
               --verify-tag \
               --title "$GITHUB_REF_NAME" \
               --notes "$RELEASE_NOTES" \
-              --generate-notes
+              --generate-notes \
+              "$TARBALL" "$TARBALL.sha256"
           fi

@@ -10,7 +10,24 @@ describe('versioned release workflow', () => {
   it('runs only for version tags and verifies repository version metadata', () => {
     assert.match(workflow, /tags:\s*\['v\*\.\*\.\*'\]/);
     assert.match(workflow, /npm run version:check -- "\$TAG_VERSION"/);
-    assert.match(workflow, /\^v\[0-9\]\+\\\.\[0-9\]\+\\\.\[0-9\]\+\$/);
+    assert.match(workflow, /\^v\[0-9\]\+\\\.\[0-9\]\+\\\.\[0-9\]\+-ecmsi\\\.\[0-9\]\+\$/);
+  });
+
+  it('verifies the portable gate on Windows before publishing anything', () => {
+    assert.match(workflow, /verify-windows:[\s\S]*runs-on: windows-latest[\s\S]*npm run release:check:windows/);
+    assert.match(workflow, /needs: \[verify, verify-windows\]/);
+    assert.match(ciWorkflow, /test-windows:[\s\S]*runs-on: windows-latest[\s\S]*npm run release:check:windows/);
+    assert.doesNotMatch(pkg.scripts['release:check:windows'], /test:coverage/);
+    for (const name of Object.keys(pkg.scripts)) {
+      assert.doesNotMatch(pkg.scripts[name], /^[A-Z_]+=\S*\s/, `${name} uses a POSIX-only env prefix`);
+    }
+  });
+
+  it('attaches the package tarball and its checksum to the release', () => {
+    assert.match(workflow, /npm shrinkwrap\s+npm pack --pack-destination dist/);
+    assert.match(workflow, /sha256sum/);
+    assert.match(workflow, /"\$TARBALL" "\$TARBALL\.sha256"/);
+    assert.deepEqual(pkg.files, ['index.js', 'src/', 'test/contract/mcp/legacy-tool-mappings.json', '.env.example']);
   });
 
   it('publishes a multi-platform GHCR image with semantic aliases', () => {
@@ -28,7 +45,7 @@ describe('versioned release workflow', () => {
   it('uses the same aggregate gate for pull requests and tag verification', () => {
     assert.match(ciWorkflow, /pull_request:[\s\S]*npm run release:check/);
     assert.match(workflow, /name: Run release gates\s+run: npm run release:check/);
-    assert.match(workflow, /needs: verify[\s\S]*platforms:\s*linux\/amd64,linux\/arm64/);
+    assert.match(workflow, /needs: \[verify, verify-windows\][\s\S]*platforms:\s*linux\/amd64,linux\/arm64/);
     assert.match(pkg.scripts['release:check'], /npm run release:readiness:check/);
   });
 

@@ -350,12 +350,16 @@ Each entry is its own process with its own credentials — fully isolated, no se
   `PATH` your terminal sees, so a bare `node` command fails silently with "connection closed".
 - **Keep the JWT in `.env`**, loaded with `--env-file-if-exists=<checkout>\.env`, rather than in the
   client config file. The `.env` file is gitignored; the client config is not protected.
-- **Before running the test suite**, run `git config core.autocrlf false` in this checkout and
-  re-checkout the files (`git rm -rq --cached . && git reset --hard`). The contract tests hash the
-  OpenAPI and coverage files, and CRLF conversion changes those bytes.
-- **The per-file coverage floor cannot be measured on Windows.** HTTP-mode child processes are
-  killed by signal and never write their coverage. Every other gate passes locally; rely on the
-  fork's Linux CI for that one.
+- **Every npm script works in PowerShell and cmd.exe.** Scripts that need environment variables go
+  through `scripts/with-env.js`, so `npm run start:http`, `npm run test:container` and the live
+  evaluation scripts behave the same as on Linux.
+- **Line endings are pinned to LF** by `.gitattributes`, so no `core.autocrlf` change is needed. The
+  contract tests hash the OpenAPI and coverage files; if you cloned before that file existed, refresh
+  the checkout with `git rm -rq --cached . && git reset --hard`.
+- **Run `npm run release:check:windows`** for the local gate. It is the full release gate minus the
+  per-file coverage floor, which cannot be measured on Windows because HTTP-mode child processes are
+  killed by signal before they write coverage. The fork's Linux CI enforces that one; the Windows CI
+  job runs this same script.
 
 A working Claude Desktop entry on Windows, single-tenant stdio:
 

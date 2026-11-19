@@ -1,6 +1,6 @@
 {
-  "version": "3.0.0",
-  "tag": "v3.0.0",
+  "version": "3.0.0-ecmsi.1",
+  "tag": "v3.0.0-ecmsi.1",
   "contract": {
     "path": "test/openapi-spec.json",
     "sha256": "051882a41b6e4f8b895abf85b46c3d90e90a88019b08ec5a8c6782aec6585640",

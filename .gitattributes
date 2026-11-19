@@ -1,0 +1,3 @@
+# Normalize line endings to LF on every platform. The contract tests hash files in the
+# repository, and CRLF conversion on Windows checkouts changes those bytes.
+* text=auto eol=lf
