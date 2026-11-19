@@ -31,7 +31,7 @@
 - **Node.js ≥ 22.9** (uses the built-in `--env-file-if-exists` flag and `fetch`)
 - An **N-central instance** you can reach over HTTPS
 - A **User-API JWT token** generated in the N-central UI
-- **On Windows:** install the Node.js LTS line, reference the absolute `node.exe` path in MCP client configs (GUI clients do not inherit your shell `PATH`), and run `git config core.autocrlf false` in this checkout before running the test suite. See the [Windows notes](docs/SETUP-GUIDE.md#windows-notes) in the setup guide.
+- **On Windows:** install the Node.js LTS line and reference the absolute `node.exe` path in MCP client configs (GUI clients do not inherit your shell `PATH`). Every npm script runs unchanged in PowerShell and cmd.exe, and the repository pins LF line endings so the contract tests pass without Git configuration. See the [Windows notes](docs/SETUP-GUIDE.md#windows-notes) in the setup guide.
 
 ### 1. Install dependencies
 
@@ -170,8 +170,9 @@ fork's hardening.
 docker pull ghcr.io/ecmsi/n-central-rest-api-mcp:<released-version>
 ```
 
-Version 3.0.0 is currently an unreleased candidate; see [Release Readiness](docs/RELEASE-READINESS.md)
-for its exact scope and publication state.
+Each GitHub Release also carries the npm package tarball and its SHA-256 checksum, so a Windows or
+Linux host without Docker can install the server with `npm install -g <tarball>`. See
+[Release Readiness](docs/RELEASE-READINESS.md) for the current candidate's scope and publication state.
 
 ### 5. Verify
 
@@ -432,27 +433,35 @@ For client-side setup issues, see the **[Setup & Client Guide](docs/SETUP-GUIDE.
 
 ## Releases
 
-Pushing a stable semantic-version tag starts `.github/workflows/release.yml`. The workflow requires
-the tag to exactly match the package, lockfile, and MCP server version, runs the release gates, builds
-Linux AMD64 and ARM64 images, publishes them to GHCR, and then creates the corresponding GitHub
-Release. In this fork the images land under `ghcr.io/ecmsi/n-central-rest-api-mcp`, and the version
-is shared with upstream: this fork does not bump it independently, so a tag here describes upstream's
-version plus the changes in [Fork Changes](docs/FORK-CHANGES.md).
+Pushing a release tag starts `.github/workflows/release.yml`. The workflow requires the tag to exactly
+match the package, lockfile, and MCP server version, runs the full release gate on Linux and the
+portable gate on Windows, builds Linux AMD64 and ARM64 images, publishes them to GHCR, and then
+creates the corresponding GitHub Release with the npm package tarball and its checksum attached.
 
-Version `3.0.0` metadata currently describes an unreleased candidate. Do not create its tag until
-the generated [Release Readiness](docs/RELEASE-READINESS.md) report is current, `npm run release:check`
-and the container smoke gate pass on the merged revision, and a maintainer explicitly approves
-publication.
+**Fork versioning.** This fork's releases use upstream's version plus a fork suffix:
+`<upstream version>-ecmsi.<n>`, for example `3.0.0-ecmsi.1`. The suffix identifies the hardened
+build, never collides with a number upstream may publish later, and keeps version bumps out of the
+hardening commits sent upstream. The workflow rejects any tag without the suffix. Bump `n` for each
+fork release on the same upstream base; when upstream is merged at a new version, reset to `.1` on
+that base. The version lives in `package.json`, `package-lock.json` (two places), `src/mcp-server.js`
+and `test/contract/v3-release-readiness.json`; `npm run version:check` and
+`npm run release:readiness:check` fail if they disagree.
 
-After those conditions are satisfied for version `3.0.0`:
+Do not create a tag until the generated [Release Readiness](docs/RELEASE-READINESS.md) report is
+current, `npm run release:check` and the container smoke gate pass on the merged revision, and a
+maintainer explicitly approves publication. Then:
 
 ```bash
-git tag -a v3.0.0 -m "Release v3.0.0"
-git push origin v3.0.0
+git tag -a v3.0.0-ecmsi.1 -m "Release v3.0.0-ecmsi.1"
+git push origin v3.0.0-ecmsi.1
 ```
 
-The container receives immutable `3.0.0` and moving `3.0`, `3`, and `latest` tags. The GitHub Release
-includes the pushed image digest. A mismatched or non-stable tag fails before anything is published.
+The container receives the immutable `3.0.0-ecmsi.1` tag and the moving `latest` tag. Because the
+version carries a prerelease suffix, the floating `3.0` and `3` aliases are not applied. The GitHub
+Release records the pushed image digest and carries `n-central-rest-api-mcp-3.0.0-ecmsi.1.tgz` with a
+`.sha256` file. A mismatched tag fails before anything is published. The first image pushed to the
+`ecmsi` organization is private until the package is made public in the organization's package
+settings.
 
 ---
 
@@ -510,6 +519,7 @@ The Copilot integration requires Spec Kit's explicit multi-install override when
 ├── scripts/
 │   ├── check-critical-coverage.js # Aggregate and critical per-file coverage gate
 │   ├── live-readonly-smoke.js     # Explicit credential-backed read-only verification
+│   ├── with-env.js                # Cross-platform VAR=value prefix for npm scripts
 │   └── …                          # Generated-doc, evaluation, readiness, and version checks
 ├── test/
 │   ├── auth-failure.test.js    # Failed token exchange surfaces only the status code, never the body

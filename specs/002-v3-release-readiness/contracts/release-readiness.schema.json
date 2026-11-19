@@ -19,10 +19,12 @@
   ],
   "properties": {
     "version": {
-      "const": "3.0.0"
+      "type": "string",
+      "pattern": "^3\\.0\\.0-ecmsi\\.[0-9]+$"
     },
     "tag": {
-      "const": "v3.0.0"
+      "type": "string",
+      "pattern": "^v3\\.0\\.0-ecmsi\\.[0-9]+$"
     },
     "contract": {
       "$ref": "#/$defs/contract"

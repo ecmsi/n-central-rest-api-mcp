@@ -23,7 +23,7 @@ import {
 export function createMcpServer(tools) {
   const server = new McpServer({
     name: 'ncentral-api',
-    version: '3.0.0',
+    version: '3.0.0-ecmsi.1',
     description: 'N-central REST API MCP Server (Unofficial)',
   });
   const sensitiveTools = new Set(tools.filter(isSensitiveTool).map(({ name }) => name));

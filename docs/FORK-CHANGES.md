@@ -29,6 +29,11 @@ contribute the hardening back upstream one change at a time.
 | Auth failure errors | Appended up to 200 bytes of the upstream response body to the thrown error in single-tenant mode. | The error carries only the status code. A new test drives a 401 from the token exchange and asserts the body never appears. | The message lands in MCP client log files and can name the server or user. |
 | Windows test support | The stdio and HTTP spawn tests passed a drive-letter path to `--import`, which Node rejects, and asserted a clean exit after SIGTERM, which Windows cannot deliver. | The loader is passed as a file URL and the shutdown assertion is platform-aware. No server code changed. | ECMSI develops on Windows. |
 | Dependencies | September 2026 lockfile carried 13 advisories (1 critical in `proxy-addr`, 4 high including `@modelcontextprotocol/sdk` and `body-parser`, 8 moderate). | `npm audit fix` within declared ranges; SDK at 1.32.2. Both audits report zero. | Lockfile-only; no range changes. |
+| Fork versioning | Version `3.0.0` shared with upstream; the release workflow accepted only plain `vX.Y.Z` tags. | Version `3.0.0-ecmsi.1`. Release tags must be `vX.Y.Z-ecmsi.N`; the readiness schema accepts that pattern and the readiness generator prints the record's tag instead of a hard-coded one. | A fork release must never claim a number upstream may publish, and version bumps must stay out of the hardening commits sent upstream. |
+| npm script portability | Six scripts used `VAR=value node ...` prefixes, which fail in PowerShell and cmd.exe. | `scripts/with-env.js` sets the variables and runs the command without a shell. A test rejects any script that reintroduces a prefix. | ECMSI runs and tests on Windows as well as Linux. |
+| Line endings | No `.gitattributes`; Windows checkouts needed `core.autocrlf=false` or the hash-based contract tests failed. | `* text=auto eol=lf` normalizes every checkout to LF. | Removes a manual step and makes the Windows CI job possible. |
+| Windows CI | Linux only. | `test-windows` job in CI and `verify-windows` job in the release workflow run `npm run release:check:windows`, the full gate minus the per-file coverage floor, which Windows cannot measure. An image is published only after both platforms pass. | Cross-platform support is enforced, not assumed. |
+| Release assets | GitHub Release carried the image reference and digest only. | The release job also attaches the `npm pack` tarball and its SHA-256 checksum. `package.json` declares `files` so the tarball holds only runtime code. Image labels name the fork. | Hosts without Docker, Windows in particular, can install a released build without cloning. |
 
 Not changed, by design:
 
@@ -39,8 +44,8 @@ Not changed, by design:
 ## Verification
 
 - Linux CI on this fork (Ubuntu, Node 22 and 24, container smoke) passes `npm run release:check` in full, including the per-file coverage floors.
-- On Windows 11 with Node 26 LTS, the full suite, lint, type-check, generated-document gates and both audits pass. The per-file coverage floor cannot be measured on Windows because HTTP-mode child processes are killed by signal before V8 writes their coverage; rely on CI for that gate.
-- Windows checkouts must set `core.autocrlf=false` for this repository. The contract tests hash the OpenAPI and coverage files, and CRLF conversion changes those bytes.
+- Windows CI (`windows-latest`, Node 24) passes `npm run release:check:windows`: the full suite, generated-document gates, version check, lint, type-check and both audits. The per-file coverage floor cannot be measured on Windows because HTTP-mode child processes are killed by signal before V8 writes their coverage; the Linux jobs enforce that gate.
+- Line endings are pinned to LF by `.gitattributes`. A checkout made before that file existed should be refreshed with `git rm -rq --cached . && git reset --hard` so the hashed contract files match.
 
 ## Keeping the fork current
 
@@ -50,6 +55,11 @@ Not changed, by design:
 
 ## Sending changes upstream
 
-Each change above was committed separately so it can be cherry-picked onto its own branch against
-`upstream/main` and opened as an individual pull request. The auth-failure change is in two commits on
-this fork's history and should be squashed into one when cherry-picked.
+Each hardening change above was committed separately so it can be cherry-picked onto its own branch
+against `upstream/main` and opened as an individual pull request. The auth-failure change is in two
+commits on this fork's history and should be squashed into one when cherry-picked.
+
+The cross-platform release work landed as one commit because the version change touches the same
+files. The pieces worth offering upstream are `scripts/with-env.js` with the script rewrites,
+`.gitattributes`, and the Windows CI job; the `-ecmsi` versioning, image labels and readiness schema
+pattern are fork-specific and should be left out of any upstream pull request.

@@ -98,7 +98,7 @@ export function renderReleaseReadiness() {
     '- An immutable image digest must be recorded in the GitHub release.',
     '- Release notes are generated from the exact approved tag.',
     '- A retry must preserve an existing release and must never move the version tag.',
-    '- Creating `v3.0.0` is a separate, explicit post-merge maintainer approval action.',
+    `- Creating \`${readiness.tag}\` is a separate, explicit post-merge maintainer approval action.`,
     '',
   ];
   return { rendered: `${lines.join('\n').trimEnd()}\n`, result };
