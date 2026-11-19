@@ -31,7 +31,7 @@
 - **Node.js ≥ 22.9** (uses the built-in `--env-file-if-exists` flag and `fetch`)
 - An **N-central instance** you can reach over HTTPS
 - A **User-API JWT token** generated in the N-central UI
-- **On Windows:** install the Node.js LTS line and reference the absolute `node.exe` path in MCP client configs (GUI clients do not inherit your shell `PATH`). Every npm script runs unchanged in PowerShell and cmd.exe, and the repository pins LF line endings so the contract tests pass without Git configuration. See the [Windows notes](docs/SETUP-GUIDE.md#windows-notes) in the setup guide.
+- **On Windows:** install the Node.js LTS line and reference the absolute `node.exe` path in MCP client configs (GUI clients do not inherit your shell `PATH`). Every npm script runs unchanged in PowerShell and cmd.exe, and the repository pins LF line endings so the contract tests pass without Git configuration. See the [Windows notes](docs/SETUP-GUIDE.md#windows-notes) in the setup guide, and the [Deployment guide](docs/DEPLOYMENT.md) for running the server as a Windows service.
 
 ### 1. Install dependencies
 
@@ -171,8 +171,10 @@ docker pull ghcr.io/ecmsi/n-central-rest-api-mcp:<released-version>
 ```
 
 Each GitHub Release also carries the npm package tarball and its SHA-256 checksum, so a Windows or
-Linux host without Docker can install the server with `npm install -g <tarball>`. See
-[Release Readiness](docs/RELEASE-READINESS.md) for the current candidate's scope and publication state.
+Linux host without Docker can install the server with `npm install -g <tarball>`. The
+[Deployment guide](docs/DEPLOYMENT.md) covers Docker Compose and systemd on Linux and a Windows
+service, and [Release Readiness](docs/RELEASE-READINESS.md) records the current candidate's scope
+and publication state.
 
 ### 5. Verify
 
@@ -537,6 +539,7 @@ The Copilot integration requires Spec Kit's explicit multi-install override when
 │   ├── API-COVERAGE.md          # Generated 104-operation implementation/evidence ledger
 │   ├── ARCHITECTURE.md           # Runtime boundaries and supported deployment topology
 │   ├── DEPENDENCY-REVIEW.md      # Combined dependency and superseded-PR disposition record
+│   ├── DEPLOYMENT.md            # Running a release on a Linux Docker/systemd host or as a Windows service
 │   ├── FORK-CHANGES.md          # What this ECMSI fork changes from upstream, and why
 │   ├── MCP-EVALUATION.md         # Generated tool-selection quality report
 │   ├── MCP-TOOLSETS.md          # Generated exact catalog membership and scopes
