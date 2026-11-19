@@ -102,7 +102,9 @@ MCP sessions, authentication tokens, resource caches, session activity, and rate
 held in the server process. Use one HTTP replica, or configure reliable session affinity for each
 complete MCP session. Ordinary round-robin balancing is unsupported because another replica cannot
 resolve that session's in-memory tenant context. Rate limits and caches also remain per replica.
-See [Runtime Architecture](ARCHITECTURE.md) for the exact version 3 boundary.
+See [Runtime Architecture](ARCHITECTURE.md) for the exact version 3 boundary, and the
+[Deployment Guide](DEPLOYMENT.md) for installing a release on a Linux or Windows host and running
+it as a service.
 
 ---
 
