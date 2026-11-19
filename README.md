@@ -15,6 +15,8 @@
 
 > **Disclaimer:** This is an unofficial, community-maintained MCP server. It is **not** an official N-able MCP server, and it is focused specifically on the N-central **REST API** surface.
 
+> **Note:** This fork uses more than 98% of the original release as its active base. Please, support the original maintainer. We rely on them, not the other way around. This fork was made to independently review their implementation for security purposes and make adjustments for our own personal standards in-house. If you find issues relating to the core base itself; please raise them with the parent upstream repo. If you find a problem with our changes, then you could raise those here with us.
+
 ---
 
 ## Features at a Glance
