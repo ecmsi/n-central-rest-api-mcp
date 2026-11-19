@@ -441,7 +441,7 @@ portable gate on Windows, builds Linux AMD64 and ARM64 images, publishes them to
 creates the corresponding GitHub Release with the npm package tarball and its checksum attached.
 
 **Fork versioning.** This fork's releases use upstream's version plus a fork suffix:
-`<upstream version>-ecmsi.<n>`, for example `3.0.0-ecmsi.1`. The suffix identifies the hardened
+`<upstream version>-ecmsi.<n>`, for example `3.0.0-ecmsi.2`. The suffix identifies the hardened
 build, never collides with a number upstream may publish later, and keeps version bumps out of the
 hardening commits sent upstream. The workflow rejects any tag without the suffix. Bump `n` for each
 fork release on the same upstream base; when upstream is merged at a new version, reset to `.1` on
@@ -454,13 +454,13 @@ current, `npm run release:check` and the container smoke gate pass on the merged
 maintainer explicitly approves publication. Then:
 
 ```bash
-git tag -a v3.0.0-ecmsi.1 -m "Release v3.0.0-ecmsi.1"
-git push origin v3.0.0-ecmsi.1
+git tag -a v3.0.0-ecmsi.2 -m "Release v3.0.0-ecmsi.2"
+git push origin v3.0.0-ecmsi.2
 ```
 
-The container receives the immutable `3.0.0-ecmsi.1` tag and the moving `latest` tag. Because the
+The container receives the immutable `3.0.0-ecmsi.2` tag and the moving `latest` tag. Because the
 version carries a prerelease suffix, the floating `3.0` and `3` aliases are not applied. The GitHub
-Release records the pushed image digest and carries `n-central-rest-api-mcp-3.0.0-ecmsi.1.tgz` with a
+Release records the pushed image digest and carries `n-central-rest-api-mcp-3.0.0-ecmsi.2.tgz` with a
 `.sha256` file. A mismatched tag fails before anything is published. The first image pushed to the
 `ecmsi` organization is private until the package is made public in the organization's package
 settings.
