@@ -44,7 +44,7 @@ Each [GitHub Release](https://github.com/ecmsi/n-central-rest-api-mcp/releases) 
 | `n-central-rest-api-mcp-<version>.tgz` | The npm package: runtime code only, plus a shrinkwrap so `npm install` reproduces the dependency tree the release was tested with. |
 | `n-central-rest-api-mcp-<version>.tgz.sha256` | Checksum for the tarball. |
 
-Versions look like `3.0.0-ecmsi.2`: upstream's version plus the fork's release number. See the
+Versions look like `3.0.0-ecmsi.3`: upstream's version plus the fork's release number. See the
 [README](../README.md#releases) for why.
 
 ---
@@ -77,7 +77,7 @@ Create `compose.yml` that pulls the released image rather than building from sou
 ```yaml
 services:
   ncentral-mcp:
-    image: ghcr.io/ecmsi/n-central-rest-api-mcp:3.0.0-ecmsi.2
+    image: ghcr.io/ecmsi/n-central-rest-api-mcp:3.0.0-ecmsi.3
     container_name: ncentral-mcp
     env_file: .env
     environment:
@@ -140,8 +140,8 @@ For a host where Docker is not wanted, install the tarball and run it under syst
 sudo useradd --system --home /opt/ncentral-mcp --shell /usr/sbin/nologin ncentral-mcp
 sudo mkdir -p /opt/ncentral-mcp/app && cd /opt/ncentral-mcp
 # Download the .tgz and .sha256 assets from the release page, then:
-sha256sum -c n-central-rest-api-mcp-3.0.0-ecmsi.2.tgz.sha256
-sudo tar -xzf n-central-rest-api-mcp-3.0.0-ecmsi.2.tgz -C app --strip-components=1
+sha256sum -c n-central-rest-api-mcp-3.0.0-ecmsi.3.tgz.sha256
+sudo tar -xzf n-central-rest-api-mcp-3.0.0-ecmsi.3.tgz -C app --strip-components=1
 cd app && sudo npm install --omit=dev
 sudo cp /opt/ncentral-mcp/app/.env.example /opt/ncentral-mcp/.env 2>/dev/null || sudo touch /opt/ncentral-mcp/.env
 sudo chown -R ncentral-mcp:ncentral-mcp /opt/ncentral-mcp
@@ -208,7 +208,7 @@ Download the `.tgz` and `.sha256` assets from the release page into a scratch fo
 and extract to a fixed location that does not depend on any user's profile:
 
 ```powershell
-$version = '3.0.0-ecmsi.2'
+$version = '3.0.0-ecmsi.3'
 $tarball = "n-central-rest-api-mcp-$version.tgz"
 $expected = (Get-Content "$tarball.sha256").Split(' ')[0]
 $actual = (Get-FileHash $tarball -Algorithm SHA256).Hash.ToLower()

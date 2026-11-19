@@ -53,7 +53,8 @@ Not changed, by design:
 | Version | State | Notes |
 |---|---|---|
 | `3.0.0-ecmsi.1` | Withdrawn | The tag was created unsigned and pointed at the deployment-guide branch head rather than `main`, and the release job failed before creating the GitHub Release because `npm pack` was given a `dist` directory that did not exist. A container image was pushed from that commit but nobody had pulled it, so the git tag and the image version were both deleted on 2026-11-19. The number is not reused. |
-| `3.0.0-ecmsi.2` | Current | First complete release: a signed tag on `main` producing the image and a GitHub Release with tarball and checksum. Includes the deployment guide and the `dist` fix. Tag signing is enabled in the checkout (`tag.gpgsign=true`), so `git tag -a` signs with the same key as commits. A first attempt tagged the pre-merge commit and was refused by the version gate, which published nothing; the tag was recreated on the merged commit. |
+| `3.0.0-ecmsi.2` | Released 2026-11-19 | First complete release: a signed tag on `main`, the image at digest `sha256:053470fde38f98d4f2baab7e0c25a13ad844de42a2a217be269943f87fd683f7`, and a GitHub Release with tarball and checksum. Includes the deployment guide and the `dist` fix. A first attempt tagged the pre-merge commit and was refused by the version gate, which published nothing; the tag was recreated on the merged commit. Known gap: the tarball does not contain `npm-shrinkwrap.json`, because the `files` allowlist excludes it, so `npm install` from this tarball resolves dependencies within the declared ranges rather than reproducing the tested tree. The image is unaffected. |
+| `3.0.0-ecmsi.3` | Current candidate | Adds `npm-shrinkwrap.json` to the `files` allowlist so the tarball carries the tested dependency tree, as the deployment guide describes. No runtime change. |
 
 ## Keeping the fork current
 
