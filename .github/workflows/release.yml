@@ -114,6 +114,9 @@ jobs:
           TAG_NAME: ${{ github.ref_name }}
         run: |
           TAG_VERSION="${TAG_NAME#v}"
+          # Ship the exact dependency tree the release gates ran against; npm reads
+          # npm-shrinkwrap.json from the tarball on install.
+          npm shrinkwrap
           npm pack --pack-destination dist
           TARBALL="dist/n-central-rest-api-mcp-${TAG_VERSION}.tgz"
           test -f "$TARBALL"

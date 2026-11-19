@@ -24,10 +24,10 @@ describe('versioned release workflow', () => {
   });
 
   it('attaches the package tarball and its checksum to the release', () => {
-    assert.match(workflow, /npm pack --pack-destination dist/);
+    assert.match(workflow, /npm shrinkwrap\s+npm pack --pack-destination dist/);
     assert.match(workflow, /sha256sum/);
     assert.match(workflow, /"\$TARBALL" "\$TARBALL\.sha256"/);
-    assert.deepEqual(pkg.files, ['index.js', 'src/', 'test/contract/mcp/legacy-tool-mappings.json']);
+    assert.deepEqual(pkg.files, ['index.js', 'src/', 'test/contract/mcp/legacy-tool-mappings.json', '.env.example']);
   });
 
   it('publishes a multi-platform GHCR image with semantic aliases', () => {

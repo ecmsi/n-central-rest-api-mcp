@@ -13,7 +13,8 @@
   "files": [
     "index.js",
     "src/",
-    "test/contract/mcp/legacy-tool-mappings.json"
+    "test/contract/mcp/legacy-tool-mappings.json",
+    ".env.example"
   ],
   "bin": {
     "n-central-rest-api-mcp": "./index.js"
