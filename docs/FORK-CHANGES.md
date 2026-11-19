@@ -52,8 +52,8 @@ Not changed, by design:
 
 | Version | State | Notes |
 |---|---|---|
-| `3.0.0-ecmsi.1` | Image only; superseded | The tag was created unsigned and pointed at the deployment-guide branch head rather than `main`, and the release job failed before creating the GitHub Release because `npm pack` was given a `dist` directory that did not exist. The container image and `latest` alias were published from that commit; its runtime content is identical to `3.0.0-ecmsi.2`. The tag is left in place because the image tag exists and version tags are never moved. |
-| `3.0.0-ecmsi.2` | Current candidate | Intended first complete release: a signed tag on `main` producing the image and a GitHub Release with tarball and checksum. Includes the deployment guide and the `dist` fix. Tag signing is now enabled in the checkout (`tag.gpgsign=true`), so `git tag -a` signs with the same key as commits. |
+| `3.0.0-ecmsi.1` | Withdrawn | The tag was created unsigned and pointed at the deployment-guide branch head rather than `main`, and the release job failed before creating the GitHub Release because `npm pack` was given a `dist` directory that did not exist. A container image was pushed from that commit but nobody had pulled it, so the git tag and the image version were both deleted on 2026-11-19. The number is not reused. |
+| `3.0.0-ecmsi.2` | Current | First complete release: a signed tag on `main` producing the image and a GitHub Release with tarball and checksum. Includes the deployment guide and the `dist` fix. Tag signing is enabled in the checkout (`tag.gpgsign=true`), so `git tag -a` signs with the same key as commits. A first attempt tagged the pre-merge commit and was refused by the version gate, which published nothing; the tag was recreated on the merged commit. |
 
 ## Keeping the fork current
 
