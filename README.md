@@ -1,5 +1,14 @@
 # N-central REST API MCP Server (ECMSI fork)
 
+[![CI](https://img.shields.io/github/actions/workflow/status/ecmsi/n-central-rest-api-mcp/ci.yml?branch=main&label=CI&logo=githubactions&logoColor=white)](https://github.com/ecmsi/n-central-rest-api-mcp/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/actions/workflow/status/ecmsi/n-central-rest-api-mcp/release.yml?label=release%20pipeline&logo=githubactions&logoColor=white)](https://github.com/ecmsi/n-central-rest-api-mcp/actions/workflows/release.yml)
+[![Latest release](https://img.shields.io/github/v/release/ecmsi/n-central-rest-api-mcp?label=latest&logo=github)](https://github.com/ecmsi/n-central-rest-api-mcp/releases/latest)
+[![Container image](https://img.shields.io/badge/ghcr.io-ecmsi%2Fn--central--rest--api--mcp-0db7ed?logo=docker&logoColor=white)](https://github.com/ecmsi/n-central-rest-api-mcp/pkgs/container/n-central-rest-api-mcp)
+[![Platforms](https://img.shields.io/badge/platforms-linux%20%7C%20windows-555)](docs/DEPLOYMENT.md)
+[![Node.js](https://img.shields.io/badge/node-%3E%3D22.9-339933?logo=nodedotjs&logoColor=white)](https://nodejs.org/)
+[![License: MIT](https://img.shields.io/github/license/ecmsi/n-central-rest-api-mcp)](LICENSE)
+[![Upstream](https://img.shields.io/badge/upstream-theonlytruebigmac%2Fn--central--mcp-lightgrey?logo=github)](https://github.com/theonlytruebigmac/n-central-mcp)
+
 > A [Model Context Protocol](https://modelcontextprotocol.io/) server for **N-able N-central** — exposing the N-central REST API as MCP tools, resources, and prompts for use with any MCP-compatible client.
 
 > **About this fork:** This is ECMSI's reviewed and hardened fork of [theonlytruebigmac/n-central-mcp](https://github.com/theonlytruebigmac/n-central-mcp), the community server that N-able's developer portal distributes as a recipe. It tracks upstream and adds the security hardening listed in **[Fork Changes](docs/FORK-CHANGES.md)**. The original work is copyright its upstream author; ECMSI holds copyright on the fork's modifications. Both are released under the MIT License.
