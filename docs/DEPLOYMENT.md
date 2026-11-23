@@ -124,7 +124,7 @@ address. Clients connect to `https://mcp.example.internal/mcp` with the bearer k
 
 ```bash
 docker compose logs -f --tail 100        # structured logs and the audit stream
-docker compose restart                   # after editing .env
+docker compose up -d                     # after editing .env (a plain `restart` keeps the old environment)
 docker compose pull && docker compose up -d   # after changing the image tag in compose.yml
 ```
 
@@ -366,5 +366,5 @@ Then connect one client as described in the Setup Guide and run `get_server_stat
 |---|---|---|
 | Service starts then stops at once | `.env` unreadable by the service account, or `MCP_API_KEY` empty while `MCP_PORT` is set | Check the `.err.log` (Windows) or `journalctl -u ncentral-mcp` (Linux); fix permissions or the key |
 | `healthz` works locally, remote clients cannot connect | Bound to localhost, which is the intended default | Add the TLS proxy, or use a tunnel; do not bind to `0.0.0.0` without TLS |
-| `401` from the first tool call | JWT invalid, or the API user's 90-day password rotation has passed | Regenerate the JWT in N-central and update `.env`, then restart |
+| `401` from the first tool call | JWT invalid, the API user's 90-day password rotation has passed, or the API user has never completed an interactive login | Fix the user in N-central (reset the password, or log in once as that user), regenerate the JWT and update `.env`. Then on Docker run `docker compose up -d`: `docker compose restart` keeps the old environment and the old token. On Windows, `Restart-Service` is enough |
 | Works on Linux, test suite fails on an old Windows checkout | CRLF files in a checkout made before `.gitattributes` existed | `git rm -rq --cached . && git reset --hard` |
