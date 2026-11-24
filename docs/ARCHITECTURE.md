@@ -17,7 +17,9 @@ and session activity are process-local and intentionally bounded. Version 3 ther
 
 Round-robin requests from one MCP session across replicas are unsupported: another process cannot
 resolve the in-memory session ID or its tenant context. Restarts intentionally discard all of this
-state and require clients to initialize a new session.
+state and require clients to initialize a new session: a request carrying a well-formed session ID
+the process does not hold is answered with `404` and a JSON-RPC `Session not found` error, which the
+Streamable HTTP specification defines as the signal to start a new session.
 
 Distributed sessions, rate limits, cache eviction, credential lifecycle, and cross-replica shutdown
 need a separately specified external-state design. That additive architecture work belongs after

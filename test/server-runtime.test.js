@@ -12,8 +12,10 @@ import {
   getClientIp,
   parseRequestBody,
   resolveRequestContext,
+  startHttpRuntime,
   validSessionId,
 } from '../src/http-runtime.js';
+import { makeContext } from '../src/context.js';
 import { createMcpServer } from '../src/mcp-server.js';
 import { inc, renderPrometheus, setGauge } from '../src/metrics.js';
 import { createCapabilityResult } from '../src/tool-registry.js';
@@ -185,5 +187,104 @@ describe('focused server runtime modules', () => {
     assert.match(output, /# TYPE runtime_test_total counter/);
     assert.match(output, /runtime_test_total\{a="1",z="quoted\\"value"\} 2/);
     assert.match(output, /# TYPE runtime_test_gauge gauge\nruntime_test_gauge 3/);
+  });
+});
+
+describe('HTTP session routing', () => {
+  const UNKNOWN_SESSION = '123e4567-e89b-12d3-a456-426614174000';
+  const INITIALIZE = {
+    jsonrpc: '2.0', id: 1, method: 'initialize',
+    params: { protocolVersion: '2024-11-05', capabilities: {}, clientInfo: { name: 'test', version: '0' } },
+  };
+  const TOOLS_LIST = { jsonrpc: '2.0', id: 2, method: 'tools/list', params: {} };
+
+  async function withRuntime(callback) {
+    const runtime = await startHttpRuntime({
+      port: 0, bindAddress: '127.0.0.1', apiKey: 'runtime-key', corsOrigin: '', trustProxy: false,
+      maxBodySize: 65_536, rateLimitWindowMs: 60_000, rateLimitMaximum: 1_000, maxRateLimitEntries: 100,
+      maxSessions: 10, sessionTtlMs: 60_000, metricsRequireAuth: false, multiTenant: false,
+      envContext: makeContext('https://runtime.example.test', 'a.b.c'), fqdnAllowlist: [],
+      createServer: () => createMcpServer([]),
+    });
+    const audit = [];
+    const originalError = console.error;
+    console.error = (message) => { audit.push(String(message)); };
+    try {
+      await callback({ port: runtime.httpServer.address().port, audit, runtime });
+    } finally {
+      console.error = originalError;
+      await runtime.shutdown();
+    }
+  }
+
+  function request(port, method, { sessionId, body } = {}) {
+    return fetch(`http://127.0.0.1:${port}/mcp`, {
+      method,
+      headers: {
+        Authorization: 'Bearer runtime-key',
+        'Content-Type': 'application/json',
+        Accept: 'application/json, text/event-stream',
+        ...(sessionId ? { 'mcp-session-id': sessionId } : {}),
+      },
+      body: body ? JSON.stringify(body) : undefined,
+    });
+  }
+
+  async function expectSessionNotFound(response) {
+    assert.equal(response.status, 404);
+    assert.match(response.headers.get('content-type'), /application\/json/);
+    assert.deepEqual(await response.json(), {
+      jsonrpc: '2.0', error: { code: -32001, message: 'Session not found' }, id: null,
+    });
+  }
+
+  it('answers a well-formed but unknown session id with 404 on POST, GET, and DELETE', async () => {
+    await withRuntime(async ({ port, audit }) => {
+      await expectSessionNotFound(await request(port, 'POST', { sessionId: UNKNOWN_SESSION, body: TOOLS_LIST }));
+      await expectSessionNotFound(await request(port, 'GET', { sessionId: UNKNOWN_SESSION }));
+      await expectSessionNotFound(await request(port, 'DELETE', { sessionId: UNKNOWN_SESSION }));
+      const entries = audit.filter((line) => line.includes('"event":"session_not_found"'));
+      assert.equal(entries.length, 3);
+      for (const entry of entries) assert.doesNotMatch(entry, new RegExp(UNKNOWN_SESSION));
+    });
+  });
+
+  it('keeps 400 for a non-initialize POST without a session and for a malformed session id', async () => {
+    await withRuntime(async ({ port, audit }) => {
+      const missing = await request(port, 'POST', { body: TOOLS_LIST });
+      assert.equal(missing.status, 400);
+      assert.deepEqual(await missing.json(), {
+        jsonrpc: '2.0', error: { code: -32000, message: 'Bad request: missing session' }, id: null,
+      });
+      const malformed = await request(port, 'POST', { sessionId: 'not-a-session', body: TOOLS_LIST });
+      assert.equal(malformed.status, 400);
+      await malformed.text();
+      for (const method of ['GET', 'DELETE']) {
+        const malformedStream = await request(port, method, { sessionId: 'not-a-session' });
+        assert.equal(malformedStream.status, 400, method);
+        assert.equal(await malformedStream.text(), 'Invalid session');
+        const absent = await request(port, method);
+        assert.equal(absent.status, 400, method);
+        await absent.text();
+      }
+      assert.equal(audit.some((line) => line.includes('session_not_found')), false);
+    });
+  });
+
+  it('still creates a session for an initialize request without a session id and 404s it once deleted', async () => {
+    await withRuntime(async ({ port, runtime }) => {
+      const initialized = await request(port, 'POST', { body: INITIALIZE });
+      assert.equal(initialized.status, 200);
+      const sessionId = initialized.headers.get('mcp-session-id');
+      assert.equal(validSessionId(sessionId), true);
+      await initialized.text();
+      assert.equal(runtime.sessionCount(), 1);
+
+      const deleted = await request(port, 'DELETE', { sessionId });
+      assert.equal(deleted.status, 200);
+      await deleted.text();
+      assert.equal(runtime.sessionCount(), 0);
+      await expectSessionNotFound(await request(port, 'POST', { sessionId, body: TOOLS_LIST }));
+    });
   });
 });

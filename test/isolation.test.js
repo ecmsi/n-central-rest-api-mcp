@@ -444,8 +444,10 @@ describe('real curated registry parity', () => {
         method: 'DELETE', headers: { ...sessionHeaders, Accept: 'application/json, text/event-stream' },
       });
       assert.equal(deleted.status, 200);
+      // The id is well-formed but no longer live: 404 tells the client to re-initialize.
       const afterDelete = await mcpPost(port, sessionHeaders, { jsonrpc: '2.0', id: 73, method: 'tools/list', params: {} });
-      assert.equal(afterDelete.status, 400);
+      assert.equal(afterDelete.status, 404);
+      assert.equal(afterDelete.json?.error?.code, -32001);
       const health = await (await fetch(`http://127.0.0.1:${port}/healthz`)).json();
       assert.equal(health.sessions, 0);
 
