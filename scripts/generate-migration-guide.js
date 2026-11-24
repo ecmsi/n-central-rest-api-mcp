@@ -12,7 +12,7 @@ const lines = [
   '## Default changes', '',
   '- `NC_TOOLSETS` now defaults to `core`.',
   '- `NC_WRITE_MODE` now defaults to `read-only`.',
-  '- Curated tools return `structuredContent` plus a readable text fallback.',
+  '- Curated tools return `structuredContent` plus a readable text part. In this fork the text part also carries the serialized structured result unless `MCP_RESULT_TEXT=summary` is set.',
   '- Automatic pagination is bounded to 20 pages and 10,000 records; results are bounded to 256 KiB.', '',
   'To stage migration, set `NC_TOOLSETS=core,compatibility`. Write and destructive aliases still require `NC_WRITE_MODE=write` or `full`.', '',
   'Removed names are never advertised in any write mode. `list_custom_psa_tickets` is removed because its upstream route is a navigation link index; use `get_psa_ticket` with a known identifier.', '',

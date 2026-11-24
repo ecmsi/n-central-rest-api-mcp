@@ -50,9 +50,12 @@ for stdio. Omit both for the safest default. See [MCP Toolsets](MCP-TOOLSETS.md)
 membership and [Migrating to 3.0](MIGRATING-TO-3.0.md) before enabling `compatibility`.
 
 Successful calls return stable `structuredContent` with `data` and `meta` fields plus a readable
-text fallback. `meta` records contributing REST operations, pagination, partial component errors,
-and truncation. Responses are bounded to 256 KiB; automatic paging and composed calls are bounded
-as documented in the [README](../README.md#pagination-and-composition-limits).
+text part: a summary line followed, by default, by the serialized structured result, so clients that
+only show the model the text part (claude.ai connectors) still receive the data. Set
+`MCP_RESULT_TEXT=summary` to send the summary line alone for clients that read `structuredContent`.
+`meta` records contributing REST operations, pagination, partial component errors, and truncation.
+Responses are bounded to 256 KiB; automatic paging and composed calls are bounded as documented in
+the [README](../README.md#pagination-and-composition-limits).
 
 The reviewed API snapshot contains 104 operations: 92 implemented, none partially implemented, and
 12 with reviewed unsupported dispositions. Consult [API Coverage](API-COVERAGE.md) for limitations

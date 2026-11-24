@@ -322,9 +322,14 @@ Every successful tool result has the same shape:
 }
 ```
 
-The complete value is returned once as MCP `structuredContent`; text content is a compact summary
-with record count, page guidance, and partial/truncation state. Component failures can be reported
-as partial results; secrets and tenant URLs are redacted. Structured results are capped at 256 KiB.
+The complete value is returned as MCP `structuredContent`. The text content starts with a compact
+summary line carrying the record count, page guidance, and partial/truncation state. By default
+(`MCP_RESULT_TEXT=json`) that line is followed by the serialized structured result, because some
+clients, claude.ai connectors among them, show the model only the text part and would otherwise see
+field names without values. Set `MCP_RESULT_TEXT=summary` to send the summary line alone, as
+upstream does, when every client reads `structuredContent` and context size matters more. Component
+failures can be reported as partial results; secrets and tenant URLs are redacted. Structured results
+are capped at 256 KiB, and the serialized copy in the text part is the same bounded value.
 
 ### Pagination and composition limits
 
@@ -452,7 +457,7 @@ portable gate on Windows, builds Linux AMD64 and ARM64 images, publishes them to
 creates the corresponding GitHub Release with the npm package tarball and its checksum attached.
 
 **Fork versioning.** This fork's releases use upstream's version plus a fork suffix:
-`<upstream version>-ecmsi.<n>`, for example `3.0.0-ecmsi.3`. The suffix identifies the hardened
+`<upstream version>-ecmsi.<n>`, for example `3.0.0-ecmsi.4`. The suffix identifies the hardened
 build, never collides with a number upstream may publish later, and keeps version bumps out of the
 hardening commits sent upstream. The workflow rejects any tag without the suffix. Bump `n` for each
 fork release on the same upstream base; when upstream is merged at a new version, reset to `.1` on
@@ -465,13 +470,13 @@ current, `npm run release:check` and the container smoke gate pass on the merged
 maintainer explicitly approves publication. Then:
 
 ```bash
-git tag -a v3.0.0-ecmsi.3 -m "Release v3.0.0-ecmsi.3"
-git push origin v3.0.0-ecmsi.3
+git tag -a v3.0.0-ecmsi.4 -m "Release v3.0.0-ecmsi.4"
+git push origin v3.0.0-ecmsi.4
 ```
 
-The container receives the immutable `3.0.0-ecmsi.3` tag and the moving `latest` tag. Because the
+The container receives the immutable `3.0.0-ecmsi.4` tag and the moving `latest` tag. Because the
 version carries a prerelease suffix, the floating `3.0` and `3` aliases are not applied. The GitHub
-Release records the pushed image digest and carries `n-central-rest-api-mcp-3.0.0-ecmsi.3.tgz` with a
+Release records the pushed image digest and carries `n-central-rest-api-mcp-3.0.0-ecmsi.4.tgz` with a
 `.sha256` file. A mismatched tag fails before anything is published. The first image pushed to the
 `ecmsi` organization is private until the package is made public in the organization's package
 settings.

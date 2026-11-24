@@ -6,7 +6,7 @@ Version 3.0 replaces the default endpoint-shaped catalog with twelve read-only, 
 
 - `NC_TOOLSETS` now defaults to `core`.
 - `NC_WRITE_MODE` now defaults to `read-only`.
-- Curated tools return `structuredContent` plus a readable text fallback.
+- Curated tools return `structuredContent` plus a readable text part. In this fork the text part also carries the serialized structured result unless `MCP_RESULT_TEXT=summary` is set.
 - Automatic pagination is bounded to 20 pages and 10,000 records; results are bounded to 256 KiB.
 
 To stage migration, set `NC_TOOLSETS=core,compatibility`. Write and destructive aliases still require `NC_WRITE_MODE=write` or `full`.

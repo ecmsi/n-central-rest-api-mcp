@@ -11,6 +11,7 @@ import { auditErrorMetadata, auditLog } from './src/logging.js';
 import { createMcpServer } from './src/mcp-server.js';
 import { PROMPT_COUNT } from './src/prompts.js';
 import { RESOURCE_COUNT } from './src/resources.js';
+import { resolveResultTextMode } from './src/tool-registry.js';
 import { resolveToolConfiguration } from './src/toolsets.js';
 
 if (!MULTI_TENANT && !ENV_CONTEXT) {
@@ -35,11 +36,13 @@ const port = process.env.MCP_PORT == null || process.env.MCP_PORT.trim() === ''
   });
 
 let toolConfiguration;
+let resultTextMode;
 try {
   toolConfiguration = resolveToolConfiguration({
     rawToolsets: process.env.NC_TOOLSETS,
     rawWriteMode: process.env.NC_WRITE_MODE,
   });
+  resultTextMode = resolveResultTextMode(process.env.MCP_RESULT_TEXT);
 } catch (error) {
   console.error(`Error: ${error.message}`);
   process.exit(1);
@@ -64,14 +67,14 @@ async function main() {
   }
 
   if (!quiet) {
-    console.error(`Registered ${tools.length} tools, ${RESOURCE_COUNT} resources, ${PROMPT_COUNT} prompts (NC_TOOLSETS=${toolConfiguration.toolsets.join(',')}, NC_WRITE_MODE=${toolConfiguration.writeMode})`);
+    console.error(`Registered ${tools.length} tools, ${RESOURCE_COUNT} resources, ${PROMPT_COUNT} prompts (NC_TOOLSETS=${toolConfiguration.toolsets.join(',')}, NC_WRITE_MODE=${toolConfiguration.writeMode}, MCP_RESULT_TEXT=${resultTextMode})`);
     console.error(MULTI_TENANT
       ? 'Multi-tenant mode: per-request X-NC-FQDN / X-NC-JWT required; auth is per-tenant on first call.'
       : 'Auth will be performed on first tool call.');
   }
 
   if (!port) {
-    const server = createMcpServer(tools);
+    const server = createMcpServer(tools, { resultTextMode });
     await server.connect(new StdioServerTransport());
     console.error('N-central REST API MCP Server running on stdio');
     auditLog('server_start', { mode: 'stdio', toolCount: tools.length });
@@ -102,7 +105,7 @@ async function main() {
     multiTenant: MULTI_TENANT,
     envContext: ENV_CONTEXT,
     fqdnAllowlist,
-    createServer: () => createMcpServer(tools),
+    createServer: () => createMcpServer(tools, { resultTextMode }),
   });
   console.error(`N-central REST API MCP Server on http://${bindAddress}:${port}/mcp`);
   if (apiKey) console.error('  Auth: Bearer token required');

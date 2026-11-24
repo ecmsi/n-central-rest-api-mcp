@@ -88,6 +88,26 @@ function fitResultToLimit(result) {
   return fitted;
 }
 
+/**
+ * How the readable text part of a curated result is rendered.
+ * - `json`: the summary line followed by the serialized structured result, so clients that
+ *   ignore `structuredContent` (claude.ai connectors among them) still receive the data.
+ * - `summary`: the summary line only, as upstream ships it; halves the payload for clients
+ *   that read `structuredContent`.
+ */
+export const RESULT_TEXT_MODES = Object.freeze(['json', 'summary']);
+export const DEFAULT_RESULT_TEXT_MODE = 'json';
+
+/** @param {unknown} raw the MCP_RESULT_TEXT value; absent or blank selects the default */
+export function resolveResultTextMode(raw) {
+  if (raw == null || String(raw).trim() === '') return DEFAULT_RESULT_TEXT_MODE;
+  const mode = String(raw).trim().toLowerCase();
+  if (!RESULT_TEXT_MODES.includes(mode)) {
+    throw new Error('MCP_RESULT_TEXT must be one of ' + RESULT_TEXT_MODES.join(', ') + ' (received "' + raw + '")');
+  }
+  return mode;
+}
+
 /** @param {{data: unknown, meta: Record<string, any>}} result */
 export function summarizeMcpResult(result) {
   const { data, meta } = result;
@@ -121,8 +141,22 @@ export function summarizeMcpResult(result) {
   return summary;
 }
 
-/** @param {Record<string, any>} tool @param {{data: unknown, meta: Record<string, any>}} result */
-export function toMcpResult(tool, result) {
+/**
+ * @param {{data: unknown, meta: Record<string, any>}} structuredContent
+ * @param {string} [mode] one of RESULT_TEXT_MODES
+ */
+export function renderResultText(structuredContent, mode = DEFAULT_RESULT_TEXT_MODE) {
+  const summary = summarizeMcpResult(structuredContent);
+  return mode === 'summary' ? summary : `${summary}
+${JSON.stringify(structuredContent)}`;
+}
+
+/**
+ * @param {Record<string, any>} tool
+ * @param {{data: unknown, meta: Record<string, any>}} result
+ * @param {{textMode?: string}} [options]
+ */
+export function toMcpResult(tool, result, options = {}) {
   const structuredContent = fitResultToLimit(createCapabilityResult(
     result?.data,
     result?.meta?.operations || tool.operations || [],
@@ -130,15 +164,22 @@ export function toMcpResult(tool, result) {
     { page: result?.meta?.page, truncated: result?.meta?.truncated },
   ));
   return {
-    content: [{ type: /** @type {const} */ ('text'), text: summarizeMcpResult(structuredContent) }],
+    content: [{
+      type: /** @type {const} */ ('text'),
+      text: renderResultText(structuredContent, options.textMode ?? DEFAULT_RESULT_TEXT_MODE),
+    }],
     structuredContent,
   };
 }
 
-/** @param {Record<string, any>} tool @param {Record<string, unknown>} args */
-export async function executeCuratedTool(tool, args) {
+/**
+ * @param {Record<string, any>} tool
+ * @param {Record<string, unknown>} args
+ * @param {{textMode?: string}} [options]
+ */
+export async function executeCuratedTool(tool, args, options = {}) {
   try {
-    return toMcpResult(tool, await tool.handler(args));
+    return toMcpResult(tool, await tool.handler(args), options);
   } catch (error) {
     return {
       content: [{ type: 'text', text: `Error: ${sanitizeToolError(error?.message)}` }],

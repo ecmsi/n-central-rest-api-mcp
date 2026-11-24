@@ -72,7 +72,9 @@ describe('focused server runtime modules', () => {
         name: 'synthetic_read', arguments: { value: 'ok' },
       });
       assert.deepEqual(successful.structuredContent.data, { value: 'ok' });
-      assert.equal(successful.content[0].text.includes('ok'), false);
+      const [summaryLine, serialized] = successful.content[0].text.split('\n');
+      assert.equal(summaryLine, 'Returned an object with fields: value.');
+      assert.deepEqual(JSON.parse(serialized), successful.structuredContent);
 
       const failed = await client.callTool({
         name: 'synthetic_write', arguments: { value: 'fail' },
@@ -92,6 +94,29 @@ describe('focused server runtime modules', () => {
       assert.match(metrics, /nc_mcp_tool_response_bytes_total\{success="false",tool="synthetic_write"\}/);
       assert.match(metrics, /nc_mcp_partial_results_total\{tool="synthetic_read"\}/);
       assert.match(metrics, /nc_mcp_truncated_results_total\{tool="synthetic_read"\}/);
+    } finally {
+      await client.close();
+      await server.close();
+    }
+  });
+
+  it('renders summary-only text when the server is created with resultTextMode summary', async () => {
+    const tools = [{
+      name: 'synthetic_summary', description: 'Synthetic read used to verify summary mode.',
+      inputSchema: { type: 'object', additionalProperties: false, properties: {} },
+      outputSchema: CURATED_OUTPUT_SCHEMA,
+      operations: ['GET /api/synthetic'], toolsets: ['core'], writeScope: 'read',
+      handler: async () => createCapabilityResult({ value: 'hidden-from-text' }, ['GET /api/synthetic']),
+    }];
+    const server = createMcpServer(tools, { resultTextMode: 'summary' });
+    const client = new Client({ name: 'runtime-test-summary', version: '1' });
+    const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+    await server.connect(serverTransport);
+    await client.connect(clientTransport);
+    try {
+      const result = await client.callTool({ name: 'synthetic_summary', arguments: {} });
+      assert.deepEqual(result.structuredContent.data, { value: 'hidden-from-text' });
+      assert.equal(result.content[0].text, 'Returned an object with fields: value.');
     } finally {
       await client.close();
       await server.close();
