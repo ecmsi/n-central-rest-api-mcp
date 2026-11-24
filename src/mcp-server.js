@@ -26,7 +26,7 @@ export function createMcpServer(tools, options = {}) {
   const textMode = options.resultTextMode ?? DEFAULT_RESULT_TEXT_MODE;
   const server = new McpServer({
     name: 'ncentral-api',
-    version: '3.0.0-ecmsi.4',
+    version: '3.0.0-ecmsi.5',
     description: 'N-central REST API MCP Server (Unofficial)',
   });
   const sensitiveTools = new Set(tools.filter(isSensitiveTool).map(({ name }) => name));
