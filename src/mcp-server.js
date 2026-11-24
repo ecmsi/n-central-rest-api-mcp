@@ -8,6 +8,7 @@ import { registerPrompts } from './prompts.js';
 import { registerResources } from './resources.js';
 import { jsonSchemaToZod } from './server-utils.js';
 import {
+  DEFAULT_RESULT_TEXT_MODE,
   buildToolAnnotations,
   isSensitiveTool,
   sanitizeToolError,
@@ -19,11 +20,13 @@ import {
  * A fresh instance is required for each Streamable HTTP transport.
  *
  * @param {Record<string, any>[]} tools
+ * @param {{resultTextMode?: string}} [options] resultTextMode is a validated RESULT_TEXT_MODES value
  */
-export function createMcpServer(tools) {
+export function createMcpServer(tools, options = {}) {
+  const textMode = options.resultTextMode ?? DEFAULT_RESULT_TEXT_MODE;
   const server = new McpServer({
     name: 'ncentral-api',
-    version: '3.0.0-ecmsi.3',
+    version: '3.0.0-ecmsi.4',
     description: 'N-central REST API MCP Server (Unofficial)',
   });
   const sensitiveTools = new Set(tools.filter(isSensitiveTool).map(({ name }) => name));
@@ -44,7 +47,7 @@ export function createMcpServer(tools) {
           });
         }
 
-        const result = toMcpResult(tool, await tool.handler(args));
+        const result = toMcpResult(tool, await tool.handler(args), { textMode });
         const durationMs = Date.now() - startedAt;
         auditLog('tool_call', { tool: tool.name, success: true, durationMs });
         inc('nc_mcp_tool_calls_total', { tool: tool.name, success: 'true' });
