@@ -44,7 +44,7 @@ Each [GitHub Release](https://github.com/ecmsi/n-central-rest-api-mcp/releases) 
 | `n-central-rest-api-mcp-<version>.tgz` | The npm package: runtime code only, plus a shrinkwrap so `npm install` reproduces the dependency tree the release was tested with. |
 | `n-central-rest-api-mcp-<version>.tgz.sha256` | Checksum for the tarball. |
 
-Versions look like `3.0.0-ecmsi.3`: upstream's version plus the fork's release number. See the
+Versions look like `3.0.0-ecmsi.4`: upstream's version plus the fork's release number. See the
 [README](../README.md#releases) for why.
 
 ---
@@ -77,7 +77,7 @@ Create `compose.yml` that pulls the released image rather than building from sou
 ```yaml
 services:
   ncentral-mcp:
-    image: ghcr.io/ecmsi/n-central-rest-api-mcp:3.0.0-ecmsi.3
+    image: ghcr.io/ecmsi/n-central-rest-api-mcp:3.0.0-ecmsi.4
     container_name: ncentral-mcp
     env_file: .env
     environment:
@@ -130,6 +130,11 @@ docker compose pull && docker compose up -d   # after changing the image tag in 
 
 To roll back, set the previous tag or digest in `compose.yml` and run the last command again.
 
+Recreating the container ends every live MCP session. Clients on a build before `3.0.0-ecmsi.5`
+receive `400` for their old session id and must be reconnected by hand (claude.ai: remove and re-add
+the connector; Claude Code: reconnect it under `/mcp`). From `3.0.0-ecmsi.5` the server answers `404`
+and clients start a new session on their own.
+
 ---
 
 ## Linux: package without Docker
@@ -140,8 +145,8 @@ For a host where Docker is not wanted, install the tarball and run it under syst
 sudo useradd --system --home /opt/ncentral-mcp --shell /usr/sbin/nologin ncentral-mcp
 sudo mkdir -p /opt/ncentral-mcp/app && cd /opt/ncentral-mcp
 # Download the .tgz and .sha256 assets from the release page, then:
-sha256sum -c n-central-rest-api-mcp-3.0.0-ecmsi.3.tgz.sha256
-sudo tar -xzf n-central-rest-api-mcp-3.0.0-ecmsi.3.tgz -C app --strip-components=1
+sha256sum -c n-central-rest-api-mcp-3.0.0-ecmsi.4.tgz.sha256
+sudo tar -xzf n-central-rest-api-mcp-3.0.0-ecmsi.4.tgz -C app --strip-components=1
 cd app && sudo npm install --omit=dev
 sudo cp /opt/ncentral-mcp/app/.env.example /opt/ncentral-mcp/.env 2>/dev/null || sudo touch /opt/ncentral-mcp/.env
 sudo chown -R ncentral-mcp:ncentral-mcp /opt/ncentral-mcp
@@ -208,7 +213,7 @@ Download the `.tgz` and `.sha256` assets from the release page into a scratch fo
 and extract to a fixed location that does not depend on any user's profile:
 
 ```powershell
-$version = '3.0.0-ecmsi.3'
+$version = '3.0.0-ecmsi.4'
 $tarball = "n-central-rest-api-mcp-$version.tgz"
 $expected = (Get-Content "$tarball.sha256").Split(' ')[0]
 $actual = (Get-FileHash $tarball -Algorithm SHA256).Hash.ToLower()
@@ -369,3 +374,4 @@ Then connect one client as described in the Setup Guide and run `get_server_stat
 | `401` from the first tool call | JWT invalid, the API user's 90-day password rotation has passed, or the API user has never completed an interactive login | Fix the user in N-central (reset the password, or log in once as that user), regenerate the JWT and update `.env`. Then on Docker run `docker compose up -d`: `docker compose restart` keeps the old environment and the old token. On Windows, `Restart-Service` is enough |
 | Works on Linux, test suite fails on an old Windows checkout | CRLF files in a checkout made before `.gitattributes` existed | `git rm -rq --cached . && git reset --hard` |
 | claude.ai connector calls succeed but Claude reports field names with no values, while Claude Code sees full results | The server is running a build older than `3.0.0-ecmsi.4`, or `MCP_RESULT_TEXT=summary` is set; claude.ai shows the model only the text part of a result | Upgrade, or remove `MCP_RESULT_TEXT` from `.env`, then recreate the container with `docker compose up -d` |
+| After a container update every call from an existing client fails with `Bad request: missing session` | The client still sends the session id it held before the restart; builds before `3.0.0-ecmsi.5` answer `400`, which clients treat as a bad request rather than a lost session | Reconnect the client once (claude.ai: remove and re-add the connector; Claude Code: reconnect under `/mcp`). Upgrade to `3.0.0-ecmsi.5` or later so clients re-initialize on their own after future restarts |
