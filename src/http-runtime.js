@@ -132,6 +132,20 @@ function sendJson(res, status, value, headers = {}) {
   res.end(JSON.stringify(value));
 }
 
+/**
+ * Answer a well-formed session id that no live transport owns (expired, evicted,
+ * or issued before a restart). The Streamable HTTP specification requires 404 here
+ * so the client discards the id and re-initializes; 400 would leave it retrying.
+ */
+function sendSessionNotFound(res, clientIp) {
+  auditLog('session_not_found', { ip: clientIp });
+  sendJson(res, 404, {
+    jsonrpc: '2.0',
+    error: { code: -32001, message: 'Session not found' },
+    id: null,
+  });
+}
+
 /** Start the HTTP listener and return a bounded shutdown handle. */
 export async function startHttpRuntime(options) {
   const {
@@ -293,6 +307,8 @@ export async function startHttpRuntime(options) {
           const server = createServer();
           await server.connect(transport);
           await runWithContext(context, () => transport.handleRequest(req, res, body));
+        } else if (sessionId && validSessionId(sessionId)) {
+          sendSessionNotFound(res, clientIp);
         } else {
           sendJson(res, 400, {
             jsonrpc: '2.0',
@@ -312,11 +328,16 @@ export async function startHttpRuntime(options) {
     }
 
     const sessionId = req.headers['mcp-session-id'];
-    if ((req.method === 'GET' || req.method === 'DELETE')
-      && (!sessionId || !validSessionId(sessionId) || !transports.has(sessionId))) {
-      res.writeHead(400, { 'Content-Type': 'text/plain' });
-      res.end('Invalid session');
-      return;
+    if (req.method === 'GET' || req.method === 'DELETE') {
+      if (!sessionId || !validSessionId(sessionId)) {
+        res.writeHead(400, { 'Content-Type': 'text/plain' });
+        res.end('Invalid session');
+        return;
+      }
+      if (!transports.has(sessionId)) {
+        sendSessionNotFound(res, clientIp);
+        return;
+      }
     }
     if (req.method === 'GET') {
       sessionActivity.set(sessionId, Date.now());

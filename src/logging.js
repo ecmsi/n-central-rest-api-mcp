@@ -20,6 +20,7 @@ const AUDIT_EVENT_FIELDS = Object.freeze({
   session_expired: new Set(['sessionId']),
   session_init: new Set(['ip', 'fqdn', 'tenant']),
   session_limit_reached: new Set(['ip', 'count']),
+  session_not_found: new Set(['ip']),
   tool_call: new Set(['tool', 'success', 'durationMs']),
   tool_error: new Set(['tool', 'errorType', 'status', 'durationMs']),
   uncaught_exception: new Set(['errorType', 'status']),
